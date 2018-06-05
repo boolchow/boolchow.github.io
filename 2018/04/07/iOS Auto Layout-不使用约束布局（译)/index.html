@@ -1,0 +1,27 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> iOS Auto Layout-不使用约束布局（译） · Hexo</title><meta name="description" content="iOS Auto Layout-不使用约束布局（译） - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/sunchongsheng" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/pinggod" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">iOS Auto Layout-不使用约束布局（译）</h1><div class="post-info">Apr 7, 2018</div><div class="post-content"><a id="more"></a> 
+<p>Stack view 提供了一种简单的方式进行自动布局，通过这种方式可以不用设置一些复杂的约束，而达到自动布局的效果。一个 stack view 定义了一行或者一列界面元素。stack view 通过以下这些属性去排版它的每个元素。</p>
+<ul>
+<li><a href="https://developer.apple.com/documentation/uikit/uistackview/1616223-axis" target="_blank" rel="noopener">axis</a>:(<a href="https://developer.apple.com/documentation/uikit/uistackview" target="_blank" rel="noopener">UIStackView</a> only) 定义 stack view 的排布方向，是垂直排布还是水平排布.</li>
+<li><a href="https://developer.apple.com/documentation/appkit/nsstackview/1488950-orientation" target="_blank" rel="noopener">orientation</a>:(<a href="https://developer.apple.com/documentation/appkit/nsstackview" target="_blank" rel="noopener">NSStackView</a> only) 定义 stack view 的排布方向，是垂直排布还是水平排布.</li>
+<li><a href="https://developer.apple.com/documentation/uikit/uistackview/1616233-distribution" target="_blank" rel="noopener">distribution</a>:定义了 stack view 中的 view 的排布方式.</li>
+<li><a href="https://developer.apple.com/documentation/uikit/uistackview/1616243-alignment" target="_blank" rel="noopener">alignment</a>:定义了 stack view 中的 view 的对齐方式.</li>
+<li><a href="https://developer.apple.com/documentation/uikit/uistackview/1616225-spacing" target="_blank" rel="noopener">spacing</a>:定义 stack view 中的 view 之间的间隔.</li>
+</ul>
+<p>Stack view 使用起来很简单，使用 Interface Builder 拖拽一个垂直或水平排布的 stack view 到画布上.然后拖拽一些你要布局的内容到 stack view 中.</p>
+<p>如果某个控件有固有大小，那么拖入 stack 之后它将保持固有大小。如果它没有固有大小，Interface Builder 会提供一个默认大小.你可以通过添加约束去改变它的大小.</p>
+<p>为了更进一步地调整布局，你可以通过属性检查器去改变 stack view 的属性。例如，下面这个例子中通过设置属性，使每个 view 等大小排布，并且每个 view 之间保持 8-point 距离。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/IB_StackView_Simple_2x.png" width="215" height="136"><br></div>
+
+<p>同时 stack view 也会根据子视图的排版与大小，去布局自身的大小，使自身紧贴子视图。你可以通过 Size 检查器去改变这些。</p>
+<blockquote>
+<p><strong>备注</strong><br>如果你想更好的进行布局，你可以直接通过添加约束来排版子视图;而且，如果你想避免任何冲突，你首先要遵循这样一个原则：如果一个 view 的默认尺寸为其根据内容计算出的固有大小，你可以放心的在这个尺寸上面添加约束。关于约束冲突更多的信息，请看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/ConflictingLayouts.html#//apple_ref/doc/uid/TP40010853-CH19-SW1" target="_blank" rel="noopener">Unsatisfiable Layouts</a> 章节。</p>
+</blockquote>
+<p>除此之外，你可以在 stack view 中嵌套新的 stack view 作为子视图，进行一些更复杂的布局。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/IB_StackView_NestedStacks_2x.png" width="285" height="232"><br></div>
+
+<p>一般情况下，你可以尽可能地通过 stack view 进行布局。除非当单用 stack view 无法满足你的需求时，在使用约束进行布局。</p>
+<p>关于更多使用它 stack view 的信息，请查看 <a href="https://developer.apple.com/documentation/uikit/uistackview" target="_blank" rel="noopener">UIStackView Class Reference</a> 或者 <a href="https://developer.apple.com/documentation/appkit/nsstackview" target="_blank" rel="noopener">NSStackView Class Reference</a> 章节。</p>
+<blockquote>
+<p><strong>备注</strong><br>尽管通过使用嵌套 stack view 可以进行复杂的布局，但是你不能完全避免使用约束。至少你需要通过约束去设置最外层 stack view 的位置（可能还有大小）。</p>
+</blockquote>
+</div></article></div></main><footer><div class="paginator"><a href="/2018/04/08/iOS Auto Layout-约束的本质（译)/" class="prev">PREV</a><a href="/2018/04/07/iOS Auto Layout-理解自动布局（译)/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2018 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>

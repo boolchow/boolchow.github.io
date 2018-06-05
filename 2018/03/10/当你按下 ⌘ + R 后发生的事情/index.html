@@ -1,0 +1,395 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 按下 ⌘ + R 后发生的事情 · Hexo</title><meta name="description" content="按下 ⌘ + R 后发生的事情 - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/sunchongsheng" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/pinggod" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">按下 ⌘ + R 后发生的事情</h1><div class="post-info">Mar 10, 2018</div><div class="post-content"><a id="more"></a>
+<p>作为一名 coder，每天的工作不是解 bug，就是写 bug。有些东西，了解了并不一定有利于写 bug，但是有利于解 bug。</p>
+<p>对于一个工程，当你按下 <code>⌘ + R</code> 到主界面显示出来，你可曾想过这一过程发生了哪些事情？这些原理性的东西，对我们 coding 并没有直接帮助，了解与否都可以 coding。但是一个 coder 的工作不只是 coding，还有 debug。了解这些东西，对我们排查一些问题很有帮助。</p>
+<p>按照阶段划分，这一过程大致可以划为三个阶段：<strong>编译阶段</strong>、<strong>APP 启动阶段</strong>、<strong>图层渲染阶段</strong>。下面针对这三个过程进行详细描述。</p>
+<h3 id="编译阶段"><a href="#编译阶段" class="headerlink" title="编译阶段"></a>编译阶段</h3><p>学过编译原理的同学都应该知道，编译主要分为四个过程：预处理、编译、汇编、链接。下面大致也是按照这个路子来。iOS 编译过程，使用的 clang 做前端，LLVM 作为后端进行完成的。使用 clang 处理前几个阶段，LLVM 处理后面几个阶段。</p>
+<h4 id="1-预处理"><a href="#1-预处理" class="headerlink" title="1.预处理"></a>1.预处理</h4><p>又称为预编译，主要做一些文本替换工作。处理 <code>#</code> 开头的指令，例如：</p>
+<ul>
+<li>宏定义的展开 （#define）</li>
+<li>头文件展开 （#include，#import）</li>
+<li>处理条件编译指令 （#if,#else,#endif)</li>
+</ul>
+<p>例如我们在代码中定义了如下宏：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">#define APP_VERSION <span class="string">"V1.0.0"</span></span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">	char *version <span class="built_in">=</span> APP_VERSION;</span><br><span class="line">	printf(<span class="string">"app version is %s"</span>,version);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用 <code>clang -E main.m</code> 进行宏展开的预处理结果如下:</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    char *version <span class="built_in">=</span> <span class="string">"V1.0.0"</span>;</span><br><span class="line">    printf(<span class="string">"version is %s"</span>,version);</span><br><span class="line">    return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>宏的使用有很多坑，尽量用其他方式代替。</p>
+<h4 id="2-词法分析"><a href="#2-词法分析" class="headerlink" title="2.词法分析"></a>2.词法分析</h4><p>完成预处理后，词法分析器（也叫扫描器）会对 .m 中的源代码进行从左到右扫描，按照语言的词法规则识别各类单词、关键字，并生成对应的单词的属性字。例如下面一段代码：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#define APP_VERSION <span class="string">"V1.0.0"</span></span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    char *version <span class="built_in">=</span> APP_VERSION;</span><br><span class="line">    printf(<span class="string">"version is %s"</span>,version);</span><br><span class="line">    return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>经过预处理阶段，然后使用 clang 命令 <code>clang -Xclang -dump-tokens main.m</code> 进行扫描分析，导出结果如下：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">int <span class="string">'int'</span>	 [StartOfLine]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">1</span>&gt;</span><br><span class="line">identifier <span class="string">'main'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">5</span>&gt;</span><br><span class="line">l_paren <span class="string">'('</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">9</span>&gt;</span><br><span class="line">int <span class="string">'int'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">10</span>&gt;</span><br><span class="line">identifier <span class="string">'argc'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">14</span>&gt;</span><br><span class="line">comma <span class="string">','</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">18</span>&gt;</span><br><span class="line">char <span class="string">'char'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">20</span>&gt;</span><br><span class="line">star <span class="string">'*'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">25</span>&gt;</span><br><span class="line">identifier <span class="string">'argv'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">27</span>&gt;</span><br><span class="line">l_square <span class="string">'['</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">31</span>&gt;</span><br><span class="line">r_square <span class="string">']'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">32</span>&gt;</span><br><span class="line">r_paren <span class="string">')'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">33</span>&gt;</span><br><span class="line">l_brace <span class="string">'&#123;'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">14</span>:<span class="number">35</span>&gt;</span><br><span class="line">char <span class="string">'char'</span>	 [StartOfLine] [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">5</span>&gt;</span><br><span class="line">star <span class="string">'*'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">10</span>&gt;</span><br><span class="line">identifier <span class="string">'version'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">11</span>&gt;</span><br><span class="line">equal <span class="string">'='</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">19</span>&gt;</span><br><span class="line">string_literal <span class="string">'"V1.0.0"'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">21</span> &lt;Spelling<span class="built_in">=</span>main.m:<span class="number">12</span>:<span class="number">21</span>&gt;&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">18</span>:<span class="number">32</span>&gt;</span><br><span class="line">identifier <span class="string">'printf'</span>	 [StartOfLine] [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">5</span>&gt;</span><br><span class="line">l_paren <span class="string">'('</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">11</span>&gt;</span><br><span class="line">string_literal <span class="string">'"version is %s"'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">12</span>&gt;</span><br><span class="line">comma <span class="string">','</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">27</span>&gt;</span><br><span class="line">identifier <span class="string">'version'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">28</span>&gt;</span><br><span class="line">r_paren <span class="string">')'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">35</span>&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">19</span>:<span class="number">36</span>&gt;</span><br><span class="line">return <span class="string">'return'</span>	 [StartOfLine] [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">20</span>:<span class="number">5</span>&gt;</span><br><span class="line">numeric_constant <span class="string">'0'</span>	 [LeadingSpace]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">20</span>:<span class="number">12</span>&gt;</span><br><span class="line">semi <span class="string">';'</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">20</span>:<span class="number">13</span>&gt;</span><br><span class="line">r_brace <span class="string">'&#125;'</span>	 [StartOfLine]	Loc<span class="built_in">=</span>&lt;main.m:<span class="number">21</span>:<span class="number">1</span>&gt;</span><br><span class="line">eof <span class="string">''</span>		Loc<span class="built_in">=</span>&lt;main.m:<span class="number">21</span>:<span class="number">2</span>&gt;</span><br></pre></td></tr></table></figure>
+<p>从上面可以看出每个单词或者字符，都标记出了具体列数和行数，这样如果在编译过程中遇到什么问题，clang 可以快速定位错误在代码中的位置。</p>
+<h4 id="3-语法分析"><a href="#3-语法分析" class="headerlink" title="3.语法分析"></a>3.语法分析</h4><p>接下来是进行语法分析。通过这一阶段，会将上一阶段的导出的结果解析成一棵抽象语法树（<a href="http://clang.llvm.org/docs/IntroductionToTheClangAST.html" target="_blank" rel="noopener">abstract syntax tree – AST</a>)。假设我们的源代码如下，并且已经经过了预处理：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#define APP_VERSION <span class="string">"V1.0.0"</span></span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    char *version <span class="built_in">=</span> APP_VERSION;</span><br><span class="line">    printf(<span class="string">"version is %s"</span>,version);</span><br><span class="line">    return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用 clang 命令 <code>clang -Xclang -ast-dump -fsyntax-only mian.m</code> 处理过后，输入的语法树如下：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">FunctionDecl 0x7ffe55884228 &lt;main.m:14:1, line:21:1&gt; line:14:5 main 'int (int, char **)'</span><br><span class="line">  |-ParmVarDecl 0x7ffe55884028 &lt;col:10, col:14&gt; col:14 argc 'int'</span><br><span class="line">  |-ParmVarDecl 0x7ffe55884110 &lt;col:20, col:32&gt; col:27 argv 'char **':'char **'</span><br><span class="line">  `-CompoundStmt <span class="number">0x7ffe55884568</span> &lt;col:<span class="number">35</span>, line:<span class="number">21</span>:<span class="number">1</span>&gt;</span><br><span class="line">    |-DeclStmt <span class="number">0x7ffe55884390</span> &lt;line:<span class="number">18</span>:<span class="number">5</span>, col:<span class="number">32</span>&gt;</span><br><span class="line">    | `-VarDecl 0x7ffe558842e8 &lt;col:5, line:12:21&gt; line:18:11 used version 'char *' cinit</span><br><span class="line">    |   `-ImplicitCastExpr 0x7ffe55884378 &lt;line:12:21&gt; 'char *' &lt;ArrayToPointerDecay&gt;</span><br><span class="line">    |     `-StringLiteral 0x7ffe55884348 &lt;col:21&gt; 'char [7]' lvalue "V1.0.0"</span><br><span class="line">    |-CallExpr 0x7ffe558844b0 &lt;line:19:5, col:35&gt; 'int'</span><br><span class="line">    | |-ImplicitCastExpr 0x7ffe55884498 &lt;col:5&gt; 'int (*)(const char *, ...)' &lt;FunctionToPointerDecay&gt;</span><br><span class="line">    | | `-DeclRefExpr 0x7ffe558843a8 &lt;col:5&gt; 'int (const char *, ...)' Function 0x7ffe55088570 'printf' 'int (const char *, ...)'</span><br><span class="line">    | |-ImplicitCastExpr 0x7ffe55884500 &lt;col:12&gt; 'const char *' &lt;BitCast&gt;</span><br><span class="line">    | | `-ImplicitCastExpr 0x7ffe558844e8 &lt;col:12&gt; 'char *' &lt;ArrayToPointerDecay&gt;</span><br><span class="line">    | |   `-StringLiteral 0x7ffe55884408 &lt;col:12&gt; 'char [14]' lvalue "version is %s"</span><br><span class="line">    | `-ImplicitCastExpr 0x7ffe55884518 &lt;col:28&gt; 'char *' &lt;LValueToRValue&gt;</span><br><span class="line">    |   `-DeclRefExpr 0x7ffe55884440 &lt;col:28&gt; 'char *' lvalue Var 0x7ffe558842e8 'version' 'char *'</span><br><span class="line">    `-ReturnStmt <span class="number">0x7ffe55884550</span> &lt;line:<span class="number">20</span>:<span class="number">5</span>, col:<span class="number">12</span>&gt;</span><br><span class="line">      `-IntegerLiteral 0x7ffe55884530 &lt;col:12&gt; 'int' 0</span><br></pre></td></tr></table></figure>
+<p>抽象语法树中每一个节点也标记出了在源码中的具体位置，便于问题定位。抽象语法树的相关知识有很多，这里就不详细解释了。</p>
+<h4 id="4-静态分析"><a href="#4-静态分析" class="headerlink" title="4.静态分析"></a>4.静态分析</h4><p>把源码转化为抽象语法树之后，编译器就可以对这个树进行分析处理。静态分析会对代码进行错误检查，如出现方法被调用但是未定义、定义但是未使用的变量等，以此提高代码质量。当然，还可以通过使用 Xcode 自带的静态分析工具（Product -&gt; Analyze）或者一些第三方的静态分析工具（例如 Facebook 的 <a href="https://infer.liaohuqiu.net/" target="_blank" rel="noopener">infer</a>进行深度分析。</p>
+<p>有时候编译器自带的静态分析，并不能满足我们的日常开发需求。因此我们可以通过使用脚本定制一套分析方案，放到集成环境中。每次提交代码时，会触发脚本进行静态分析，如果出现错误边报出警告，并且提交代码失败。依次太高开发质量。</p>
+<p>如果有兴趣，可以看一下 <a href="https://github.com/llvm-mirror/clang/tree/master/lib/StaticAnalyzer" target="_blank" rel="noopener">clang 静态分析源码</a>，看其中对哪些语法做了静态分析。</p>
+<h4 id="5-生成代码和优化"><a href="#5-生成代码和优化" class="headerlink" title="5.生成代码和优化"></a>5.生成代码和优化</h4><p>使用 clang 完成预处理和分析之后，接着会生成 LLVM 代码。还是之前那段代码：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#define APP_VERSION <span class="string">"V1.0.0"</span></span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    char *version <span class="built_in">=</span> APP_VERSION;</span><br><span class="line">    printf(<span class="string">"version is %s"</span>,version);</span><br><span class="line">    return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以用 clang 命令 <code>clang -O3 -S -emit-llvm main.m  -o main.ll</code> 进行转化，然后打开之后看到内容如下：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">; ModuleID <span class="built_in">=</span> <span class="string">'main.m'</span></span><br><span class="line">source_filename <span class="built_in">=</span> <span class="string">"main.m"</span></span><br><span class="line">target datalayout <span class="built_in">=</span> <span class="string">"e-m:o-i64:64-f80:128-n8:16:32:64-S128"</span></span><br><span class="line">target triple <span class="built_in">=</span> <span class="string">"x86_64-apple-macosx10.13.0"</span></span><br><span class="line"></span><br><span class="line">@.str <span class="built_in">=</span> private unnamed_addr constant [<span class="number">7</span> x i8] c<span class="string">"V1.0.0\00"</span>, align <span class="number">1</span></span><br><span class="line">@.str.<span class="number">1</span> <span class="built_in">=</span> private unnamed_addr constant [<span class="number">14</span> x i8] c<span class="string">"version is %s\00"</span>, align <span class="number">1</span></span><br><span class="line"></span><br><span class="line">; Function Attrs: nounwind ssp uwtable</span><br><span class="line"></span><br><span class="line">// main 方法</span><br><span class="line">define i32 @main(i32, i8** nocapture readnone) local_unnamed_addr #<span class="number">0</span> &#123;</span><br><span class="line">  <span class="comment">%3 = tail call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @.str.1, i64 0, i64 0), i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str, i64 0, i64 0))</span></span><br><span class="line">  ret i32 <span class="number">0</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">; Function Attrs: nounwind</span><br><span class="line">declare i32 @printf(i8* nocapture readonly, ...) local_unnamed_addr #<span class="number">1</span></span><br><span class="line"></span><br><span class="line">attributes #<span class="number">0</span> <span class="built_in">=</span> &#123; nounwind ssp uwtable <span class="string">"correctly-rounded-divide-sqrt-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"disable-tail-calls"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"less-precise-fpmad"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-frame-pointer-elim"</span><span class="built_in">=</span><span class="string">"true"</span> <span class="string">"no-frame-pointer-elim-non-leaf"</span> <span class="string">"no-infs-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-jump-tables"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-nans-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-signed-zeros-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-trapping-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"stack-protector-buffer-size"</span><span class="built_in">=</span><span class="string">"8"</span> <span class="string">"target-cpu"</span><span class="built_in">=</span><span class="string">"penryn"</span> <span class="string">"target-features"</span><span class="built_in">=</span><span class="string">"+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+sse4.1,+ssse3,+x87"</span> <span class="string">"unsafe-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"use-soft-float"</span><span class="built_in">=</span><span class="string">"false"</span> &#125;</span><br><span class="line">attributes #<span class="number">1</span> <span class="built_in">=</span> &#123; nounwind <span class="string">"correctly-rounded-divide-sqrt-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"disable-tail-calls"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"less-precise-fpmad"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-frame-pointer-elim"</span><span class="built_in">=</span><span class="string">"true"</span> <span class="string">"no-frame-pointer-elim-non-leaf"</span> <span class="string">"no-infs-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-nans-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-signed-zeros-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"no-trapping-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"stack-protector-buffer-size"</span><span class="built_in">=</span><span class="string">"8"</span> <span class="string">"target-cpu"</span><span class="built_in">=</span><span class="string">"penryn"</span> <span class="string">"target-features"</span><span class="built_in">=</span><span class="string">"+cx16,+fxsr,+mmx,+sse,+sse2,+sse3,+sse4.1,+ssse3,+x87"</span> <span class="string">"unsafe-fp-math"</span><span class="built_in">=</span><span class="string">"false"</span> <span class="string">"use-soft-float"</span><span class="built_in">=</span><span class="string">"false"</span> &#125;</span><br><span class="line"></span><br><span class="line">!llvm.<span class="keyword">module</span>.flags <span class="built_in">=</span> !&#123;!<span class="number">0</span>, !<span class="number">1</span>, !<span class="number">2</span>, !<span class="number">3</span>, !<span class="number">4</span>, !<span class="number">5</span>&#125;</span><br><span class="line">!llvm.ident <span class="built_in">=</span> !&#123;!<span class="number">6</span>&#125;</span><br><span class="line"></span><br><span class="line">!<span class="number">0</span> <span class="built_in">=</span> !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Version"</span>, i32 <span class="number">2</span>&#125;</span><br><span class="line">!<span class="number">1</span> <span class="built_in">=</span> !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Image Info Version"</span>, i32 <span class="number">0</span>&#125;</span><br><span class="line">!<span class="number">2</span> <span class="built_in">=</span> !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Image Info Section"</span>, !<span class="string">"__DATA, __objc_imageinfo, regular, no_dead_strip"</span>&#125;</span><br><span class="line">!<span class="number">3</span> <span class="built_in">=</span> !&#123;i32 <span class="number">4</span>, !<span class="string">"Objective-C Garbage Collection"</span>, i32 <span class="number">0</span>&#125;</span><br><span class="line">!<span class="number">4</span> <span class="built_in">=</span> !&#123;i32 <span class="number">1</span>, !<span class="string">"Objective-C Class Properties"</span>, i32 <span class="number">64</span>&#125;</span><br><span class="line">!<span class="number">5</span> <span class="built_in">=</span> !&#123;i32 <span class="number">1</span>, !<span class="string">"PIC Level"</span>, i32 <span class="number">2</span>&#125;</span><br><span class="line">!<span class="number">6</span> <span class="built_in">=</span> !&#123;!<span class="string">"Apple LLVM version 9.0.0 (clang-900.0.39.2)"</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>可以简单看一下 main 方法，看不懂无所谓，我也看不懂。只是了解这个过程就可以了。</p>
+<p>接下来 LLVM 会对代码进行编译优化，例如针对全局变量优化、循环优化、尾递归优化等，这些我了解的不是太多，所以不能乱说。想要了解的同学，可以看一下这篇文章：<a href="http://blog.csdn.net/dashuniuniu/article/details/50385528" target="_blank" rel="noopener">《LLVM 全时优化》</a>。</p>
+<p>最后就是输出汇编代码。</p>
+<h4 id="6-汇编"><a href="#6-汇编" class="headerlink" title="6.汇编"></a>6.汇编</h4><p>在这一阶段，汇编器将可读的汇编代码转化为机器代码。最终产物就是 <strong>以 .o 结尾的目标文件</strong>。</p>
+<p>针对下部分代码：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#define APP_VERSION <span class="string">"V1.0.0"</span></span><br><span class="line"></span><br><span class="line">int main(int argc, char * argv[]) &#123;</span><br><span class="line">    char *version <span class="built_in">=</span> APP_VERSION;</span><br><span class="line">    printf(<span class="string">"version is %s"</span>,version);</span><br><span class="line">    return <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们可以使用 clang 命令 <code>clang -c main.m</code> 生成目标文件 mian.o。我就不写打开后的内容了，都是二进制，也看不懂。</p>
+<h4 id="7-链接"><a href="#7-链接" class="headerlink" title="7.链接"></a>7.链接</h4><p>这一阶段是将上个阶段生成的<strong>目标文件</strong>和引用的<strong>静态库</strong>链接起来，最终生成可执行文件。</p>
+<p>我们可以用 clang 命令 <code>clang main.m</code> 生成可执行文件 a.out (不指定名字默认命名为 a.out)。然后使用 <code>file a.out</code> 命令查看其类型：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">a.out: Mach-O <span class="number">64</span>-bit executable x86_64</span><br></pre></td></tr></table></figure>
+<p>可以看出可执行文件类型为 <code>Mach-O</code> 类型，在 MAC OS 和 iOS 平台的可执行文件都是这种类型。因为我使用的是模拟器，所以处理器指令集为 <code>x86_64</code>。</p>
+<p>至此编译阶段完成。</p>
+<h4 id="8-Xcode-中一次完整的-build"><a href="#8-Xcode-中一次完整的-build" class="headerlink" title="8.Xcode 中一次完整的 build"></a>8.Xcode 中一次完整的 build</h4><p>最后我们先来看一下 Xcode 中的 build 日志，完整的看一遍这个过程。打开 Xcode 的 Log Navigator,选中 Build 这一项我们可以看到这次 build 的日志：</p>
+<p><img src="/uploads/compile-iOS/build_log.png" alt="build_log"></p>
+<p>日志是按照 target 进行分段的。当前工程中，通过 Pod 引入了 <code>YYCache</code>、<code>YYImage</code>、<code>AFNetworking</code> 三个库，除此之外还有一个 <code>Pods-Test</code> 和项目本身的 target。每个 target 之间的日志格式都是一样的，因此我们只针对一个 target 进行分析。这里只针对项目本身 target，也就是 <code>Test</code> 进行分析。也就是下面这个样子：</p>
+<p><img src="/uploads/compile-iOS/test_build_log.png" alt="test_build_log"></p>
+<p>看着很乱套，整理完之后，屡一下大概是这个流程：</p>
+<ol>
+<li>编译信息写入辅助文件，创建编译后的文件架构 （test.app)。</li>
+<li>处理打包信息。</li>
+<li>执行 CocoaPods 编译前脚本。例如这里的 <code>Check Pods Manifest.lock</code>。</li>
+<li>编译各种 .m 文件（.h 文件不参与编译）。</li>
+<li>链接所需要的 framework。</li>
+<li>编译 ImageAssets。</li>
+<li>编译 Storyboard 等相关文件。</li>
+<li>处理 info.plist 文件。</li>
+<li>链接 Storyboards。</li>
+<li>执行 CocoaPods 相关脚本，可以在 Build Phases 中查看这些脚本。</li>
+<li>创建 .app 文件。</li>
+<li>对 .app 文件进行签名</li>
+</ol>
+<p>这里我们针对第 4 步详细说一下。我们选取其中一个文件 <code>ViewController.m</code> 的日志进行分析：</p>
+<p><img src="/uploads/compile-iOS/viewcontroller_build_log.png" alt="viewcontroller_build_log"></p>
+<p>将 log 信息整理一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">1. CompileC /.../Test.build/Objects-normal/x86_64/ViewController.o Test/ViewController.m normal x86_64 objective-c com.apple.compilers.llvm.clang.1_0.compiler</span><br><span class="line"></span><br><span class="line">2. cd /Users/zhoubo/Test</span><br><span class="line">3. export LANG=en_US.US-ASCII</span><br><span class="line">   export PATH=&quot;/Applications/Xcode.app/Contents/Developer/../sbin&quot;</span><br><span class="line">4. clang -x objective-c </span><br><span class="line">		 -arch x86_64 -fmessage-length=0...</span><br><span class="line">		 -fobjc-arc...</span><br><span class="line">		 -Wno-missing-field-initializers...</span><br><span class="line">		 -DDEBUG=1...</span><br><span class="line">		 -isysroot .../iPhoneSimulator11.2.sdk</span><br><span class="line">		 -I ONE PATH</span><br><span class="line">		 -F ONE PATH</span><br><span class="line">		 -c /../ViewController.m</span><br><span class="line">		 -o /../ViewController.o</span><br></pre></td></tr></table></figure>
+<p>对应解释如下：</p>
+<ol>
+<li>通过 log 表述任务起点。</li>
+<li>进入对应工作目录。</li>
+<li>对 LANG 和 PATH 环境变量执行设置。</li>
+<li><p>clang 命令开始:</p>
+ <figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">-x : 所使用语言，此处为 Objective-C</span><br><span class="line">-arch x86_64 : 处理器指令集为 x86_64</span><br><span class="line">-fobjc-arc ： 一系列以 -f 开头，指定此文件使用 ARC 环境。你可以通过 Build Phases 设置对每个文件是否支持 ARC。</span><br><span class="line">-Wno-missing-field-initializers : 一系列以 -w 开头指令，编译警告选项，可以通过这个指令定制编译选项</span><br><span class="line">-DDEBUG<span class="built_in">=</span><span class="number">1</span> : 一些以 -D 开头的，指的是预编译宏。</span><br><span class="line">-isysroot .../iPhoneSimulator11.<span class="number">2</span>.sdk : 编译时采用的 iOS SDK 版本。</span><br><span class="line">-I : 把编译信息写入文件</span><br><span class="line">-F : 链接过程中所需要的 framework</span><br><span class="line">-c : 编译文件</span><br><span class="line">-o : 编译中间产物</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h4 id="9-关于-dSYM-文件"><a href="#9-关于-dSYM-文件" class="headerlink" title="9.关于 dSYM 文件"></a>9.关于 dSYM 文件</h4><p>每次我们编译过后，都会生成一个 dSYM 文件。这个文件中，存储了 16 进制的函数地址映射表。在 APP 执行的二进制文件中，是通过地址来调用方法的。当发生了 crash，可以通过 dSYM 文件进行地址映射，找到具体的函数调用栈。</p>
+<h3 id="App-启动阶段"><a href="#App-启动阶段" class="headerlink" title="App 启动阶段"></a>App 启动阶段</h3><p>上个阶段，最终产物为<strong>可执行文件</strong>，文件格式为 <a href="https://en.wikipedia.org/wiki/Mach-o" target="_blank" rel="noopener">Mach-o</a>。这一阶段，就以这个文件开始，详细描述一下 APP 启动过程。</p>
+<h4 id="1-过程概览"><a href="#1-过程概览" class="headerlink" title="1.过程概览"></a>1.过程概览</h4><p>这一过程分为多个阶段，简单梳理一下，可以使大脑有一个清晰的脑回路，不至于越看越懵逼。</p>
+<ul>
+<li>系统准备阶段。</li>
+<li>将 dyld 加载到 App 进程中 (Dyld)。</li>
+<li>加载 App 所需要的动态库 (Load Dylibs)。</li>
+<li>Rebase &amp; Bind。</li>
+<li>Objc setup。</li>
+<li>Initializers。</li>
+<li>mian()。</li>
+</ul>
+<p>官方的一张流程图：</p>
+<p><img src="/uploads/compile-iOS/加载过程.png" alt="加载过程"></p>
+<h4 id="2-概念解释"><a href="#2-概念解释" class="headerlink" title="2.概念解释"></a>2.概念解释</h4><p>在讲述整个过程之前，先解释两个概念：<strong>Mach-O 文件</strong> 和 <strong>dyld</strong>。</p>
+<h5 id="Mach-O"><a href="#Mach-O" class="headerlink" title=".Mach-O"></a>.Mach-O</h5><p>Mach-O 是一种文件格式，主要用于 iOS、MacOS、WatchOS 等 Apple 操作系统。这种文件格式可用于一下几种文件：</p>
+<ul>
+<li>可以行文件 （Mach-O Executable）</li>
+<li>Dylib 动态库</li>
+<li>Bundle 无法被连接的动态库，只能通过 dlopen() 加载</li>
+<li>Image，这里指的是 Executable，Dylib 或者 Bundle 的一种，下文中会提到。</li>
+<li>Framework 动态库和对应的头文件和资源文件的集合。</li>
+</ul>
+<p>Mach-O 文件的格式如下：</p>
+<p><img src="/uploads/compile-iOS/mach-o.jpg" alt="Mach-O文件格式"></p>
+<ul>
+<li>Header，包含文件的 CPU 架构，例如 x86，arm7，arm64 等。</li>
+<li>Load commands，包含文件的组织架构和在虚拟内存布局方式。</li>
+<li>Data，包含 Load commands 中需要的各个 segment，每个 segment 中又包含多个 section。当运行一个可执行文件时，虚拟内存 (virtual memory) 系统将 segment 映射到进程的地址空间上。</li>
+</ul>
+<p>上个阶段中我们知道如何产生可执行文件（a.out），这里我们可以用 size 工具来查看这个可执行文件的 segment 内容，执行如下命令：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xcrun size -x -l -m a.out</span><br></pre></td></tr></table></figure>
+<p>可以得到如下结果：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Segment __PAGEZERO: <span class="number">0</span>x100000000 (vmaddr <span class="number">0</span>x0 fileoff <span class="number">0</span>)</span><br><span class="line">Segment __TEXT: <span class="number">0</span>x1000 (vmaddr <span class="number">0</span>x100000000 fileoff <span class="number">0</span>)</span><br><span class="line">	Section __text: <span class="number">0</span>x43 (addr <span class="number">0</span>x100000f30 offset <span class="number">3888</span>)</span><br><span class="line">	Section __stubs: <span class="number">0</span>x6 (addr <span class="number">0</span>x100000f74 offset <span class="number">3956</span>)</span><br><span class="line">	Section __stub_helper: <span class="number">0</span>x1a (addr <span class="number">0</span>x100000f7c offset <span class="number">3964</span>)</span><br><span class="line">	Section __cstring: <span class="number">0</span>x15 (addr <span class="number">0</span>x100000f96 offset <span class="number">3990</span>)</span><br><span class="line">	Section __unwind_info: <span class="number">0</span>x48 (addr <span class="number">0</span>x100000fac offset <span class="number">4012</span>)</span><br><span class="line">	total <span class="number">0</span>xc0</span><br><span class="line">Segment __DATA: <span class="number">0</span>x1000 (vmaddr <span class="number">0</span>x100001000 fileoff <span class="number">4096</span>)</span><br><span class="line">	Section __nl_symbol_ptr: <span class="number">0</span>x10 (addr <span class="number">0</span>x100001000 offset <span class="number">4096</span>)</span><br><span class="line">	Section __la_symbol_ptr: <span class="number">0</span>x8 (addr <span class="number">0</span>x100001010 offset <span class="number">4112</span>)</span><br><span class="line">	Section __objc_imageinfo: <span class="number">0</span>x8 (addr <span class="number">0</span>x100001018 offset <span class="number">4120</span>)</span><br><span class="line">	total <span class="number">0</span>x20</span><br><span class="line">Segment __LINKEDIT: <span class="number">0</span>x1000 (vmaddr <span class="number">0</span>x100002000 fileoff <span class="number">8192</span>)</span><br><span class="line">total <span class="number">0</span>x100003000</span><br></pre></td></tr></table></figure>
+<p>长话短说：</p>
+<ul>
+<li><code>Segment __PAGEZERO</code>。大小为 4GB，规定进程地址空间的前 4GB 被映射为不可读不可写不可执行。</li>
+<li><code>Segment __TEXT</code>。包含可执行的代码，以只读和可执行方式映射。</li>
+<li><code>Segment __DATA</code>。包含了将会被更改的数据，以可读写和不可执行方式映射。</li>
+<li><code>Segment __LINKEDIT</code>。包含了方法和变量的元数据，代码签名等信息。</li>
+</ul>
+<h5 id="dyld"><a href="#dyld" class="headerlink" title="dyld"></a>dyld</h5><p>动态加载器（dynamic loader）。它是开源的，如果有兴趣，你可以阅读它的<a href="https://opensource.apple.com/source/dyld/" target="_blank" rel="noopener">源码</a>。dyld1 已经过时，不用去理解。目前大多用的是 dyld2。在 WWDC2017 上 Apple 新推出了 dyld3，目前只在 iOS 系统 App 上使用，后面应该会普及。这一阶段最后会详细介绍一下 dyld3，这里就不描述了。</p>
+<p>下面开始正式讲解启动过程。</p>
+<h4 id="3-系统准备阶段"><a href="#3-系统准备阶段" class="headerlink" title="3.系统准备阶段"></a>3.系统准备阶段</h4><p>点击 APP 之后，到加载 dyld 动态加载器这一过程中，系统做了很多事情，大体分为如下图几个阶段：</p>
+<p><img src="/uploads/compile-iOS/dyld 之前准备工作.png" alt="dyld 加载之前准备工作"></p>
+<p>大部分同学没有深入研究过这部分内容，我也没有深入研究过。所以我尽量复杂问题简单化，以最简单的方式将这些过程讲述明白。</p>
+<ul>
+<li>点击 APP 之后，系统会创建一个进程。然后使用 <code>load_init_program</code> 函数加载系统初始化的进程。然后再方法内调用 <code>load_init_program_at_path</code>。通过 <code>load_init_program_at_path</code> 方法调用 <code>__mac_execve</code>。</li>
+<li><code>__mac_execve</code> 函数会启动新的进程和 task，调用 <code>exec_activate_image</code>。</li>
+<li><code>exec_activate_image</code> 函数会按照二进制的格式分发映射内存的函数。<code>Mach-O</code> 文件会由 <code>exec_mach_imgact</code> 处理。</li>
+<li>在 <code>exec_mach_imgact</code> 函数中，会检测 <code>Mach-O</code> header，解析其架构等信息，文件是否合法等；先拷贝 <code>Mach-O</code> 文件到内存中；然后拷贝 <code>Mach-O</code> 文件到内存中；之后是 dyld 相关处理工作；最后释放资源。</li>
+<li><code>load_machfile</code> 函数负责 <code>Mach-O</code> 文件加载相关工作。为当前 task 分配可执行内存；加载 <code>Mach-O</code> 中 load command 部分的命令；进制数据段执行，防止溢出漏洞攻击，设置 ASLR 等；最后为 <code>exec_mach_imgact</code> 回传结果。</li>
+<li><code>parse_machfile</code> 根据 <code>load_command</code> 的信息选择不同函数加载数据。其中使用的是 <code>switch-case</code> 语句，处理的类型有 <code>LC_LOAD_DYLINKER</code>、<code>LC_ENCRYPTION_INFO_64</code> 等。</li>
+<li>上一步处理中，有一个 case 为 <code>LC_LOAD_DYLINKER</code>。进入这个 case 三次，并存在 <code>dylinker_command</code> 命令，之后会<strong>执行 <code>load_dylinker()</code> 加载 dyld</strong>。</li>
+</ul>
+<h4 id="4-将-dyld-加载到-App-进程中"><a href="#4-将-dyld-加载到-App-进程中" class="headerlink" title="4.将 dyld 加载到 App 进程中"></a>4.将 dyld 加载到 App 进程中</h4><p>在 dyld 的源码中，有一个 <a href="https://opensource.apple.com/source/dyld/dyld-132.13/src/dyldStartup.s.auto.html" target="_blank" rel="noopener">dyldStartup.s</a> 文件。这个文件针对不同的 CPU 架构，定义了不同的启动方法，大同小异。这里会执行到 <code>__dyld_start</code> 方法，然后调用 <code>dyldbootstrap::start()</code> 方法，最终调用到 <a href="https://opensource.apple.com/source/dyld/dyld-132.13/src/dyld.cpp.auto.html" target="_blank" rel="noopener">dyld.cppp</a> 中的 <code>dyld::_main()</code> 方法。部分代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">__dyld_start:</span><br><span class="line">	pushq	$<span class="number">0</span>		<span class="meta"># push a zero for debugger end of frames marker</span></span><br><span class="line">	movq	%rsp,%rbp	<span class="meta"># pointer to base of kernel frame</span></span><br><span class="line">	andq    $<span class="number">-16</span>,%rsp       <span class="meta"># force SSE alignment</span></span><br><span class="line">	</span><br><span class="line">	<span class="meta"># call dyldbootstrap::start(app_mh, argc, argv, slide)</span></span><br><span class="line">	movq	<span class="number">8</span>(%rbp),%rdi	# param1 = mh into %rdi</span><br><span class="line">	movl	<span class="number">16</span>(%rbp),%esi	# param2 = argc into %esi</span><br><span class="line">	leaq	<span class="number">24</span>(%rbp),%rdx	# param3 = &amp;argv[<span class="number">0</span>] into %rdx</span><br><span class="line">	movq	__dyld_start_static(%rip), %r8</span><br><span class="line">	leaq	__dyld_start(%rip), %rcx</span><br><span class="line">	subq	 %r8, %rcx	# param4 = slide into %rcx</span><br><span class="line">	call	__ZN13dyldbootstrap5startEPK12macho_headeriPPKcl	</span><br><span class="line"></span><br><span class="line">    	# clean up <span class="built_in">stack</span> <span class="keyword">and</span> jump to result</span><br><span class="line">	movq	%rbp,%rsp	# restore the unaligned <span class="built_in">stack</span> pointer</span><br><span class="line">	addq	$<span class="number">16</span>,%rsp	# remove the mh argument, <span class="keyword">and</span> debugger end frame marker</span><br><span class="line">	movq	$<span class="number">0</span>,%rbp		# restore ebp back to zero</span><br><span class="line">	jmp	*%rax		# jump to the entry point</span><br></pre></td></tr></table></figure>
+<p><code>_main()</code> 方法包含了 App 的启动流程，最终返回应用程序 <code>main</code> 方法的地址，这里省略代码，只标注流程：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">uintptr_t</span></span><br><span class="line">_main(<span class="keyword">const</span> macho_header* mainExecutableMH, <span class="keyword">uintptr_t</span> mainExecutableSlide, <span class="keyword">int</span> argc, <span class="keyword">const</span> <span class="keyword">char</span>* argv[], <span class="keyword">const</span> <span class="keyword">char</span>* envp[], <span class="keyword">const</span> <span class="keyword">char</span>* apple[])</span><br><span class="line">&#123;	</span><br><span class="line">		<span class="comment">// 上下文建立，初始化必要参数，解析环境变量等</span></span><br><span class="line">	......	</span><br><span class="line">	</span><br><span class="line">	<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="comment">// instantiate ImageLoader for main executable</span></span><br><span class="line">		sMainExecutable = instantiateFromLoadedImage(mainExecutableMH, mainExecutableSlide, sExecPath);</span><br><span class="line">		sMainExecutable-&gt;setNeverUnload();</span><br><span class="line">		gLinkContext.mainExecutable = sMainExecutable;</span><br><span class="line">		gLinkContext.processIsRestricted = sProcessIsRestricted;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// load shared cache</span></span><br><span class="line">		checkSharedRegionDisable();</span><br><span class="line">	<span class="meta">#<span class="meta-keyword">if</span> DYLD_SHARED_CACHE_SUPPORT</span></span><br><span class="line">		<span class="keyword">if</span> ( gLinkContext.sharedRegionMode != ImageLoader::kDontUseSharedRegion )</span><br><span class="line">			mapSharedCache();</span><br><span class="line">	<span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">	</span><br><span class="line">		<span class="comment">// load any inserted libraries</span></span><br><span class="line">		<span class="keyword">if</span>	( sEnv.DYLD_INSERT_LIBRARIES != <span class="literal">NULL</span> ) &#123;</span><br><span class="line">			<span class="keyword">for</span> (<span class="keyword">const</span> <span class="keyword">char</span>* <span class="keyword">const</span>* lib = sEnv.DYLD_INSERT_LIBRARIES; *lib != <span class="literal">NULL</span>; ++lib) </span><br><span class="line">				loadInsertedDylib(*lib);</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">	  ......</span><br><span class="line"></span><br><span class="line">		<span class="comment">// link main executable</span></span><br><span class="line">		gLinkContext.linkingMainExecutable = <span class="literal">true</span>;</span><br><span class="line">		link(sMainExecutable, sEnv.DYLD_BIND_AT_LAUNCH, ImageLoader::RPathChain(<span class="literal">NULL</span>, <span class="literal">NULL</span>));</span><br><span class="line">		gLinkContext.linkingMainExecutable = <span class="literal">false</span>;</span><br><span class="line">		<span class="keyword">if</span> ( sMainExecutable-&gt;forceFlat() ) &#123;</span><br><span class="line">			gLinkContext.bindFlat = <span class="literal">true</span>;</span><br><span class="line">			gLinkContext.prebindUsage = ImageLoader::kUseNoPrebinding;</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// get main address</span></span><br><span class="line">		result = (<span class="keyword">uintptr_t</span>)sMainExecutable-&gt;getMain();</span><br><span class="line"></span><br><span class="line">		......</span><br><span class="line">			</span><br><span class="line">	<span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="5-加载-App-所需要的动态库"><a href="#5-加载-App-所需要的动态库" class="headerlink" title="5.加载 App 所需要的动态库"></a>5.加载 App 所需要的动态库</h4><p>上文提到过，image 实际是 <code>Mach-O</code> 文件的一种，包括 Executable，Dylib 或者 Bundle。在上节的 <code>dyld::_main()</code> 函数中可以看出，dyld 会通过调用 <code>instantiateFromLoadedImage</code> 选择<code>imageLoader</code> 加载对应可执行文件。</p>
+<p>然后通过 <code>mapSharedCache()</code> 函数将 <code>/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64</code> 共享的动态库加载到内存，<strong>这也是不同的 App 实现动态库共享机制，不同的 App 的虚拟内存中共享动态库会通过系统的 vm_map 来映射同一块物理内存，从而实现共享动态库。</strong></p>
+<p>之后会调用 <code>loadInsertedDylib()</code> 函数加载环境变量 <code>DYLD_INSERT_LIBRARIES</code> 中的动态库。<code>loadInsertedDylib</code> 动态库并未做太多工作，主要工作都是调用 <code>load</code> 函数来处理，<code>dlopen</code> 也会调用 <code>load</code> 函数来进行动态库加载。</p>
+<p>再后面调用 <code>link()</code> 函数递归链接程序所依赖的库。一般一个 App 所依赖的动态库在 100-400 个左右。使用命令 <code>otool -L Test</code> 可以查看 Test 工程所需要的动态库如下：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">/usr/lib/libsqlite3.dylib (compatibility version <span class="number">9.0</span>.<span class="number">0</span>, current version <span class="number">274.6</span>.<span class="number">0</span>)</span><br><span class="line">	/usr/lib/libz.<span class="number">1</span>.dylib (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">1.2</span>.<span class="number">11</span>)</span><br><span class="line">	/System/Library/Frameworks/Accelerate.framework/Accelerate (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">4.0</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/AssetsLibrary.framework/AssetsLibrary (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">1.0</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation (compatibility version <span class="number">150.0</span>.<span class="number">0</span>, current version <span class="number">1450.14</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics (compatibility version <span class="number">64.0</span>.<span class="number">0</span>, current version <span class="number">1129.2</span>.<span class="number">1</span>)</span><br><span class="line">	/System/Library/Frameworks/ImageIO.framework/ImageIO (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">0.0</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">822.19</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/QuartzCore.framework/QuartzCore (compatibility version <span class="number">1.2</span>.<span class="number">0</span>, current version <span class="number">1.11</span>.<span class="number">0</span>)</span><br><span class="line">	/System/Library/Frameworks/Security.framework/Security (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">58286.32</span>.<span class="number">2</span>)</span><br><span class="line">	/System/Library/Frameworks/SystemConfiguration.framework/SystemConfiguration (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">963.30</span>.<span class="number">1</span>)</span><br><span class="line">	/System/Library/Frameworks/UIKit.framework/UIKit (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">3698.33</span>.<span class="number">6</span>)</span><br><span class="line">	/System/Library/Frameworks/Foundation.framework/Foundation (compatibility version <span class="number">300.0</span>.<span class="number">0</span>, current version <span class="number">1450.14</span>.<span class="number">0</span>)</span><br><span class="line">	/usr/lib/libobjc.A.dylib (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">228.0</span>.<span class="number">0</span>)</span><br><span class="line">	/usr/lib/libSystem.dylib (compatibility version <span class="number">1.0</span>.<span class="number">0</span>, current version <span class="number">1252.0</span>.<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>对于 CocoaPods 中的第三方库，一般是以静态库的方式加载，所以使用 <code>otool -L [文件名]</code> 并不会看到 Pod 中的库。但是如果 Podfile 中加入了 <code>use_frameworks!</code>，即以动态库方式加载，才会看到，也就是上面所示。</p>
+</blockquote>
+<p>最后，获取到应用程序 main 函数地址，返回。</p>
+<h4 id="6-Rebase-amp-Bind"><a href="#6-Rebase-amp-Bind" class="headerlink" title="6.Rebase &amp; Bind"></a>6.Rebase &amp; Bind</h4><p>这两个过程，并不是在上面 <code>_main()</code> 方法返回之后进行的，而是在上一节中 “link main executable” 这一步进行的。</p>
+<p>Apple 为了保证应用安全，应用了两种技术：ASLR (Address space layout randomization) 和 Code sign。</p>
+<p>ASLR 是指 “地址空间布局随机化”。App 启动的时候，程序会被映射到一个逻辑地址空间。如果这个地址固定，很容易根据地址+偏移量计算出函数地址，被攻击。 ASLR 使得这个地址是随机的，防止攻击者直接定位攻击代码位置。</p>
+<p>Code sign 是指代码签名。Apple 使用两层非对称加密，以保证 App 的安全安装。在进行 Code sign 时，是针对每个 page 进行加密，这样在 dyld 加载时，可以针对每个 page 进行独立验证。</p>
+<p>因为使用 ASLR 导致的地址随机，需要加上偏移量才是真正方法地址。调用的一个方法，这个方法的地址可能属于 Mach-O 文件内部，也可能属于其他 Mach-O 文件。</p>
+<p>Rebase 是修复内部符号地址，即修复的是指向当前 Mach-O 文件内部的资源指针，修复过程只是加一个偏移量就可以。</p>
+<p>Bind 是修复外部符号地址，即修复的是指向外部 Mach-O 文件指针。这一过程需要查询符号表，指向其他  Mach-O 文件，比较耗费时间。</p>
+<p>官方给出的一张图如下：</p>
+<p><img src="/uploads/compile-iOS/rebase_bind.png" alt="rebase_bind"></p>
+<p>简言之就是，前面步骤加载动态库时地址指偏了，这里进行 fix-up，否则调不到。</p>
+<p>至此，Mach-O 的加载就完事儿了，下面就是 iOS 系统的事情了。</p>
+<h4 id="7-Objc-Setup"><a href="#7-Objc-Setup" class="headerlink" title="7.Objc Setup"></a>7.Objc Setup</h4><p>Objc 是一门动态语言，这一步主要来加载 Runtime 相关的东西。主要做一下几件事情：</p>
+<ul>
+<li>把相关的类注册到全局 table 中。</li>
+<li>将 Category 和 Protocol 中的方法注册到对应的类中。</li>
+<li>确保 Selector 的唯一性。</li>
+</ul>
+<p>这一步主要处理自定义的一些类和方法。大部分系统类的 Runtime 初始化已经在 Rebase 和 Bind 中完成了。</p>
+<h4 id="8-Initializers"><a href="#8-Initializers" class="headerlink" title="8.Initializers"></a>8.Initializers</h4><p>这一步进行一些类的初始化。这是一个递归过程，先将依赖的动态库初始化，再对自己自定义的类初始化。主要做的事情有：</p>
+<ul>
+<li>调用 Objc 类中的 <code>+[load]</code> 方法。</li>
+<li>调用 C/C++ 标记为 <code>__attribute__(constructor)</code> 的方法。</li>
+<li>非基本类型的 C++ 静态全局比变量的创建。</li>
+</ul>
+<blockquote>
+<p>Swift 用已经干掉了 <code>+load</code> 方法，官方建议使用 <code>initialize</code> 方法，减少 App 启动时间。</p>
+</blockquote>
+<h4 id="9-Main"><a href="#9-Main" class="headerlink" title="9.Main"></a>9.Main</h4><p>千辛万苦，我们终于来到了 <code>main()</code> 方法。</p>
+<p>基于 C 的程序一般都以 <code>main()</code> 方法为入口，iOS 系统会为你自动创建 <code>main()</code> 方法。代码很简单：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int main(int argc, char * argv[])</span><br><span class="line">&#123;</span><br><span class="line">    @autoreleasepool &#123;</span><br><span class="line">        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里用的 <code>UIApplicationMain</code> 方法声明如下：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">UIKIT_EXTERN int UIApplicationMain(int argc, char * _Nonnull * _Null_unspecified argv, NSString * _Nullable principalClassName, NSString * _Nullable delegateClassName);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>argc、argv 直接传递给 UIApplicationMain 进行相关处理。</li>
+<li>principalClassName 指定应用程序的类名。这个类必须为 <code>UIApplication</code> 类型或者其子类。如果为 nil，则使用 <code>UIApplication</code> 类。</li>
+<li>delegateClassName，指定应用程序代理类。这个类必须遵循 <code>UIApplicationDelegate</code> 协议。</li>
+<li>UIApplicationMain 会根据 principalClassName 创建 <code>UIApplication</code> 对象，并根据 delegateClassName 创建 delegate 对象，将这个对象赋值给 <code>UIApplication</code> 对象的 delegate 属性。</li>
+<li>然后将 App 放入 Main Run Loop 环境中来响应和处理用户交互事件。</li>
+</ul>
+<p>关于 <code>AppDelegate</code> 中的一些方法：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">@<span class="keyword">implementation</span> AppDelegate</span><br><span class="line"></span><br><span class="line">- (BOOL)application:(UIApplication *)application willFinishLaunchingWithOptions:(NSDictionary *)launchOptions &#123;</span><br><span class="line">    // 通知进程已启动，但是还未完成显示。</span><br><span class="line">    return YES;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions &#123;</span><br><span class="line">    // 启动完成，程序准备开始运行。页面显示前最后一次操作机会。</span><br><span class="line">    return YES;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)applicationWillResignActive:(UIApplication *)application &#123;</span><br><span class="line">    // App 失去焦点，进入非活动状态。主要实例有：来电话，某些系统弹窗，双击 home 键，下拉显示系统通知栏，上拉显示系统控制中心等。</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)applicationDidEnterBackground:(UIApplication *)application &#123;</span><br><span class="line">    // App 进入后台。</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)applicationWillEnterForeground:(UIApplication *)application &#123;</span><br><span class="line">    // App 进入前台。冷启动不会收到这个通知。</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)applicationDidBecomeActive:(UIApplication *)application &#123;</span><br><span class="line">    // App 获得焦点，处于活动状态。冷热启动都会收到这个通知。</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">- (void)applicationWillTerminate:(UIApplication *)application &#123;</span><br><span class="line">    // 应用将要退出时，可以在这个方法中保存数据和一些退出前清理工作。</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application &#123;</span><br><span class="line">    // 收到内存警告，释放一些内存。</span><br><span class="line">&#125;</span><br><span class="line">@end</span><br></pre></td></tr></table></figure>
+<h4 id="10-One-more-thing"><a href="#10-One-more-thing" class="headerlink" title="10.One more thing"></a>10.One more thing</h4><p>上文说有详细讲一下 dyld3，放到这里了。dyld3 是 WWDC 2017 介绍的新的动态加载器。与 dyld2 对比如下图：</p>
+<p><img src="/uploads/compile-iOS/dyld_2_3.png" alt="dyld_2_3"></p>
+<p>两者的区别，通俗一点说就是：dyld2 所有的过程都是在启动时进行的，每次启动都会讲所有过程走一遍；dyld3 分成了两部分，虚线上面的部分在 App 下载安装和版本更新时执行并将结果写入缓存，虚线下面的部分在每次 App 启动执行。</p>
+<p>这样减少了 dyld 加载步骤，也就加快了 APP 启动时间。不过目前 dyld3 只在 Apple 系统 App 才会使用，开发者不能使用。后面应该会普及。</p>
+<p>根据上面的分析过程，我们可以大体总结出，如果要针对 App 做启动优化，可以从哪些方面入手：</p>
+<ul>
+<li>减少动态库的引入。如果是公司内部自定义组件，可以将某些同类的组件合并为一个。</li>
+<li>为了减少 Rebase &amp; Bind 时间，减少 <code>__DATA</code> 中的指针数量。</li>
+<li>为了减少 Runtime 注册时间，减少 Category，减少无用的 Class 和 Selector。</li>
+<li>尽量不要在 <code>+[load]</code> 方法中写东西，减少 <code>__atribute__((constructor))</code>，减少非基本类型 C++ 静态常量创建。</li>
+<li>将一些第三方库在使用的时候再初始化，lazy load，不要都放在 AppDelegate 中。</li>
+<li>使用 Swift。</li>
+</ul>
+<h3 id="图层渲染阶段"><a href="#图层渲染阶段" class="headerlink" title="图层渲染阶段"></a>图层渲染阶段</h3><p>做了一堆准备工作，可算是到了渲染展示界面了。</p>
+<p>图层的布局过程（这里指自动布局），主要分为三步：<strong>设置约束、更新布局、渲染视图</strong>。这里会结合 view controller 的生命周期来讲解。</p>
+<h4 id="1-视图布局过程"><a href="#1-视图布局过程" class="headerlink" title="1.视图布局过程"></a>1.视图布局过程</h4><h5 id="Update-Cycle"><a href="#Update-Cycle" class="headerlink" title="Update Cycle"></a>Update Cycle</h5><p>在程序启动时，会将 App 放到 Main Run Loop 中来响应和处理用户交互事件。关于 RunLoop，简单说来就是一个循环，只要 App 未被杀死，这个循环就一直存在。每一次循环可以认为是一个迭代周期，这个周期中会相应和处理用户交互事件。<strong>当完成了各种事件处理之后控制流回到 Main Run Loop 那个时间点，开始更新视图</strong>，更新完进入下一个循环。整个过程如下图所示：</p>
+<p><img src="/uploads/compile-iOS/update_cycle.png" alt="update_cycle"></p>
+<p>在 update cycle 这个阶段，系统会根据计算出来的新的 frame 对视图进行重绘。这个过程很快，所以用户感觉不到延迟卡顿。因为视图的更新是按照周期来的，所以有时候修改了约束、添加了视图或者修改了 frame 并不会立即重绘视图。接下来就详细介绍这一过程。</p>
+<h5 id="约束"><a href="#约束" class="headerlink" title="约束"></a>约束</h5><p>一个视图的 frame 包含了视图的位置和大小，通过这个 frame（和当前坐标系） 可以确定视图的具体位置。约束的本质就是设置一系列的关系，计算布局时会将这些关系转化为一系列线性方程式，通过线性方程式求解得出 x,y,width,height，从而确定视图位置。这一阶段是从下向上（from subview to super view)，为下一步布局准备消息。</p>
+<p><strong>updateConstraints()</strong></p>
+<p>这个方法用来在自动布局中动态改变视图约束。一般情况下，这个方法<strong>只应该被重载，不应该手动调用</strong>。在开发过程中，一些静态约束，可以在视图初始化方法或者 <code>viewDidLoad()</code> 方法中设置；对于一些动态约束，例如 <code>UILabel</code> 有时需要随着文案字数改变大小，需要动态修改约束，这时候可以重载此方法，将动态修改约束代码写在次方法里。</p>
+<p>还有一些操作会将视图标记，在下一个 update cycle 中自动触发这个方法：</p>
+<ul>
+<li>激活/禁用约束。</li>
+<li>改变约束的大小或者优先级。</li>
+<li>改变视图层级。</li>
+</ul>
+<p><strong>setNeedsUpdateConstraints()</strong></p>
+<p>如果你希望视图在下一个 update cycle 中一定要调用 <code>updateConstraints()</code> 方法，你可以调用此方法，这样就给视图打上一个标记，<strong>如果有必要</strong>在下一个 update cycle 便会调用 <code>updateConstraints()</code> 方法。</p>
+<blockquote>
+<p>这里说“如果有必要“，是因为如果系统检测视图没有任何变化，即使标记了，也不会调用此方法，避免耗费性能。所以标记了，只是告诉系统到时候 check 一下，是否要更新约束。下面一些方法同理。</p>
+</blockquote>
+<p><strong>updateConstraintsIfNeeded()</strong></p>
+<p>如果你不想等到 run loop 末尾，进入 update cycle 的时候，再去检查标记并更新约束。你想立刻检查被打上标记的视图，更新约束，可以调用此方法。同样的，调用此方法只会检查那些被标记的视图，<strong>如果有必要</strong>，才会调用 <code>updateConstraints()</code> 方法。</p>
+<p><strong>invalidateIntrinsicContentSize()</strong></p>
+<p>有些视图(例如 UILabel)有 <code>intrinsicContentSize</code> 属性，这是根据视图内容得到的固有大小。你也可以通过重载来自定义这个大小，重载之后，你需要调用 <code>invalidateIntrinsicContentSize()</code> 方法来标记 <code>intrinsicContentSize</code> 已经过期，需要再下一个 update cycle 中重新计算。</p>
+<h5 id="布局"><a href="#布局" class="headerlink" title="布局"></a>布局</h5><p>根据约束计算出视图大小和位置，下一步就是布局。这一部分是从上向下（from super view to subview)，使用上一步计算出来的大小和位置去设置视图的 center 和 bounds。</p>
+<p><strong>layoutSubviews()</strong></p>
+<p>这个方法会对<strong>视图</strong>和其<strong>子视图</strong>进行重新定位和大小调整。这个方法很昂贵，因为它会处理当前视图和其自视图的布局情况，还会调用自视图的 <code>layoutSubviews()</code>，层层调用。同样，这个方法<strong>只应该被重载，不应该手动调用</strong>。当你需要更新视图 frame 时，可以重载这个方法。</p>
+<p>一些操作可能会触发这个方法，间接触发比手动调用资源消耗要小得多。有以下几种情况会触发此方法：</p>
+<ul>
+<li>修改视图大小。</li>
+<li>添加视图 （addSubview)。</li>
+<li>UIScrollView 滚动。</li>
+<li>设备旋转。</li>
+<li>更新视图约束</li>
+</ul>
+<p>这些情况有的会告诉系统视图 frame 需要重新计算，从而调用 <code>layoutSubviews()</code>，也有的会直接触发 <code>layoutSubviews()</code> 方法。</p>
+<p><strong>setNeedsLayout()</strong></p>
+<p>此方法会将视图标记，告诉系统视图的布局需要重新计算。然后再下一个 update cycle 中，系统就会调用视图的 <code>layoutSubviews()</code> 方法。同样的，<strong>如果有必要，系统才会去调用</strong>。</p>
+<p><strong>layoutIfNeeded()</strong></p>
+<p><code>setNeedsLayout</code> 是标记视图，在下个 update cycle 中可能会调用 <code>layoutSubviews()</code> 方法。而 <code>layoutIfNeeded()</code> 是告诉系统立即调用 <code>layoutSubviews()</code> 方法。当然，调用了 <code>layoutIfNeeded()</code> 方法只会，系统会 check 视图是否有必要刷新，<strong>如果有必要</strong>，系统才会调用 <code>layoutSubviews()</code> 方法。如果你再同一个 run loop 中调用了两次 <code>layoutIfNeeded()</code>，两次之间没有视图更新，那么第二次则不会触发 <code>layoutSubviews()</code>。</p>
+<p>在做约束动画时，这个方法很有用。在动画之前，调用此方法以确保其他视图已经更新。然后在 animation block 中设置新的约束后，调用此方法来动画到新的状态。例如：</p>
+<figure class="highlight m"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[self.view layoutIfNeeded];</span><br><span class="line">  [UIView animateWithDuration:<span class="number">1.0</span> animations:^&#123;</span><br><span class="line">    [self changeConstraints];</span><br><span class="line">    [self.view layoutIfNeeded];</span><br><span class="line">  &#125;];</span><br></pre></td></tr></table></figure>
+<h5 id="渲染"><a href="#渲染" class="headerlink" title="渲染"></a>渲染</h5><p>视图的显示包含了颜色、文本、图片和 Core Graphics 绘制等。与约束、布局两个步骤类似，这里也有一些方法用来刷新渲染。这一过程是从上向下（from super view to subview)。</p>
+<p><strong>draw(_:)</strong></p>
+<p>UIView 的 <code>draw</code> 方法（OC 中的 drawRect）用来绘制视图显示的内容，只作用于当前视图，不会影响子视图。依然，这个方法应该通过其他方法触发，而不应该手动调用。</p>
+<p><strong>setNeedsDisplay()</strong></p>
+<p>这个方法类似于布局中的 <code>setNeedsLayout()</code>。调用此方法会将视图标记，然后在下一个 update cycle 系统遍历被标记的视图，调用其  <code>draw()</code> 方法进行重绘。大部分 UI 组件如果有更新，都会进行标记，在下个 update cycle 进行重绘。一般不需要显式调用此方法。</p>
+<p>这一步骤没有类似于 <code>layoutIfNeeded()</code> 这样的方法来立即刷新。通常等到下一个 update cycle 再刷新也没影响。</p>
+<h5 id="三者联系"><a href="#三者联系" class="headerlink" title="三者联系"></a>三者联系</h5><p>布局过程并不是单向的，而是一个 <strong>约束-布局</strong> 的迭代过程。布局过程有可能会影响约束，从而触发 <code>updateConstraints()</code>。只要确定好布局，判断是否需要重绘，然后展示。这一轮完毕后进入下一个 runloop。它们的大体流程如下：</p>
+<p><img src="/uploads/compile-iOS/布局过程.png" alt="布局过程"></p>
+<p>上面说的这三个过程的方法，有些类似，记起来比较乱，可以通过下面的表格对比记忆：</p>
+<table>
+<thead>
+<tr>
+<th>方法作用</th>
+<th>约束</th>
+<th>布局</th>
+<th>渲染</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>刷新方法，可以重载，不可直接调用</td>
+<td>updateConstraints</td>
+<td>layoutSubviews</td>
+<td>draw</td>
+<td></td>
+</tr>
+<tr>
+<td>标记刷新方法，使视图在下一个 update cycle 调用刷新方法</td>
+<td>setNeedsUpdateConstraints <br> invalidateIntrinsicContentSize</td>
+<td>setNeedsLayout</td>
+<td>setNeedsDisplay</td>
+<td></td>
+</tr>
+<tr>
+<td>updateConstraintsIfNeeded</td>
+<td>layoutIfNeeded</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>触发刷新方法的操作</td>
+<td>激活/禁用约束 <br> 改变约束的大小或者优先级 <br> 改变视图层级</td>
+<td>修改视图大小 <br> 添加视图 （addSubview) <br> UIScrollView 滚动 <br> 设备旋转 <br> 更新视图约束</td>
+<td>修改视图 bounds</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="2-View-Controller-生命周期"><a href="#2-View-Controller-生命周期" class="headerlink" title="2.View Controller 生命周期"></a>2.View Controller 生命周期</h4><p>校招找工作时，经常被问到 VC 的生命周期。最近面试其他人，也经常问这个问题。无论是校招时候的我，还是我面试的其他人，哪怕是工作三五年的，都回答不好这个问题。</p>
+<p>这是一个基础问题，没有太多技术难度，应该掌握。</p>
+<h5 id="单个-View-Controller-生命周期"><a href="#单个-View-Controller-生命周期" class="headerlink" title="单个 View Controller 生命周期"></a>单个 View Controller 生命周期</h5><p>以方法调用顺序描述单个 View Controller 生命周期，依次为：</p>
+<ul>
+<li><p><strong>load</strong><br>  类加载时调用，在 main 函数之前。</p>
+</li>
+<li><p><strong>initialize</strong><br>  类第一次初始化时调用，在main 函数之后。</p>
+</li>
+<li><p><strong>类初始化相关方法</strong><br>  <code>[initWithCoder:]</code> 在使用 storeboard 调用。<code>[initWithNibName: bundle:]</code> 在使用自定义 nib 文件时调用。还有其他 init 方法则是普通初始化类时调用。</p>
+</li>
+<li><p><strong>loadView</strong><br>  开始加载视图，在这之前都没有视图。除非手动调用，否则在 View Controller 生命周期只会调用一次。在</p>
+</li>
+<li><p><strong>viewDidLoad</strong><br>  View Controller 生命周期中只会调用一次。类中成员变量、子视图等一些数据的初始化都放在这个方法里。</p>
+</li>
+<li><p><strong>viewWillAppear</strong><br>  视图将要展示前调用。</p>
+</li>
+<li><p><strong>viewWillLayoutSubviews</strong><br>  将要对子视图进行布局。</p>
+</li>
+<li><p><strong>viewDidLayoutSubviews</strong><br>  已完成子视图布局，第一时间拿到 view 的具体 frame。一些依赖布局或者大小的代码都应该放在这个方法。放在之前的方法中，视图还没有布局，frame 都是 0；放在后面的方法中，可能因为一些改动，布局或者位置变量发生改变。</p>
+</li>
+<li><p><strong>viewDidAppear</strong><br>  视图显示完成调用。</p>
+</li>
+<li><p><strong>viewWillDisappear</strong><br>  视图即将消失时调用。</p>
+</li>
+<li><p><strong>viewDidDisappear</strong><br>  视图已经消失时调用。</p>
+</li>
+<li><p><strong>dealloc</strong><br>  View Controller 被释放时调用。</p>
+</li>
+</ul>
+<h5 id="两个-View-Controller-进行转场时各自方法调用时机"><a href="#两个-View-Controller-进行转场时各自方法调用时机" class="headerlink" title="两个 View Controller 进行转场时各自方法调用时机"></a>两个 View Controller 进行转场时各自方法调用时机</h5><p>不同的转场方式，两个 VC 之间方法调用顺序不同。常见的有以下几种方式：</p>
+<ul>
+<li><p><strong>Navigation</strong></p>
+<p>  push 操作</p>
+<ul>
+<li>New viewDidLoad</li>
+<li>Current viewWillDisappear</li>
+<li>New viewWillAppear</li>
+<li>New viewWillLayoutSubviews</li>
+<li>New viewDidLayoutSubviews</li>
+<li>Current viewDidDisappear</li>
+<li><p>New viewDidAppear</p>
+<p>Pop 操作（上一步的 New 在这里变为 Current，下同）</p>
+</li>
+<li><p>Current viewWillDisappear</p>
+</li>
+<li>New viewWillAppear</li>
+<li>Current viewDidDisappear</li>
+<li>New viewDidappear</li>
+</ul>
+</li>
+<li><p><strong>Page Curling (UIPageViewControllerTransitionStylePageCurl)</strong></p>
+<p>  Normal 正常翻页操作</p>
+<ul>
+<li>New viewDidLoad</li>
+<li>Current viewWillDisappear</li>
+<li>New viewWillAppear</li>
+<li>New viewWillLayoutSubviews</li>
+<li>New viewDidLayoutSubviews</li>
+<li>Current viewDidDisappear</li>
+<li><p>New viewDidAppear</p>
+<p>Canceled 翻到一半取消</p>
+</li>
+<li><p>New viewWillAppear</p>
+</li>
+<li>New viewWillAppear</li>
+<li>Current viewWillDisappear</li>
+<li>New viewWillLayoutSubviews</li>
+<li>New viewDidLayoutSubviews</li>
+<li>New viewWillDisappear</li>
+<li>Current viewWillAppear</li>
+<li>New viewDidDisappear</li>
+<li>Current viewDidAppear</li>
+</ul>
+</li>
+<li><p><strong>Page Scrolling (UIPageViewControllerTransitionStyleScroll)</strong></p>
+<p>  Normal 正常滑动翻页操作</p>
+<ul>
+<li>New viewDidLoad</li>
+<li>New viewWillAppear</li>
+<li>Current viewWillDisappear</li>
+<li>New viewWillLayoutSubviews</li>
+<li>New viewDidLayoutSubviews</li>
+<li>New viewDidAppear</li>
+<li><p>Current viewDidDisappear</p>
+<p>Canceled 滑到一半取消</p>
+</li>
+<li><p>New viewWillAppear</p>
+</li>
+<li>Current viewWillDisappear</li>
+<li>Current viewWillAppear</li>
+<li>Current viewDidAppear</li>
+<li>New viewWillDisappear</li>
+<li>New viewDidDisappear</li>
+</ul>
+</li>
+</ul>
+<p>可以看出，不同的专场方式，两个 View Cotroller 之间的生命周期方法调用顺序是不一样的。很混乱是吧，不用强记，只需要知道这个 case，在开发是注意就好了。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>以上基本就是一个工程从编译到启动的所有过程。深入理解这一过程，可以帮助我们更好的开发。因为文章比较长，中间难免有一些纰漏。如果发现请指出，我会尽快修改。</p>
+<h4 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h4><ol>
+<li><a href="https://www.objc.io/issues/6-build-tools/" target="_blank" rel="noopener">objc-Issues-Build-Tools</a></li>
+<li><a href="https://blog.csdn.net/Hello_Hwc/article/details/78317863" target="_blank" rel="noopener">深入理解iOS App的启动过程</a></li>
+<li><a href="https://mp.weixin.qq.com/s/I60p2M-IHDmeUanDUkFdVw" target="_blank" rel="noopener">XNU、dyld源码分析Mach-O和动态库的加载过程(上)</a></li>
+<li><a href="https://mp.weixin.qq.com/s/fdDPyjRkVf9AdWiikBagHg" target="_blank" rel="noopener">XNU、dyld 源码分析，Mach-O 和动态库的加载过程 (下)</a></li>
+<li><a href="http://tech.gc.com/demystifying-ios-layout/" target="_blank" rel="noopener">Demystifying iOS Layout</a></li>
+<li><a href="http://wangling.me/2014/02/the-inconsistent-order-of-view-transition-events.html" target="_blank" rel="noopener">The Inconsistent Order of View Transition Events</a></li>
+</ol>
+</div></article></div></main><footer><div class="paginator"><a href="/2018/03/25/iOS 中的事件响应与处理/" class="prev">PREV</a><a href="/2018/02/28/我所理解的Block/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2018 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>

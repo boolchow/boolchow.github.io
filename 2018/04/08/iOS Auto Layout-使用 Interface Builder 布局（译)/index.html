@@ -1,0 +1,143 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> iOS Auto Layout-使用 Interface Builder 布局（译） · Hexo</title><meta name="description" content="iOS Auto Layout-使用 Interface Builder 布局（译） - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/sunchongsheng" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/pinggod" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">iOS Auto Layout-使用 Interface Builder 布局（译）</h1><div class="post-info">Apr 8, 2018</div><div class="post-content"><a id="more"></a>
+<p>在Interface Bulider 上有三种方式可以设置约束：你可以通过按住 control 键并拖拽设置约束，可以通过 Pin 和 Align 这两个工具设置约束，还可以让 Interface Builder 自动设置约束，然后在这基础上手动做一些改变。每一种设置方式都有它的优势与劣势。大部分开发者比较倾向于只是用一种方式。但是，熟悉三种方式的使用，能够让你在开发过程中根据实际需求进行快速切换，提高效率。</p>
+<p>你可以这样将三种方式配合使用。首先从 Object library 中拖拽几个 view 和控件到画布上。根据你的需要改变他们的大小和位置。当你将 view 放到画布上之后，Interface Builder 会以左上角为基准，自动创建一些约束来定义 view 的大小和位置。</p>
+<p>你的 APP 在使用默认约束的情况下，可以正常编译和运行。先通过设置这些约束，对界面进行测试和预览，然后根据你自己的需求使用新的约束替换到默认约束。永远不要直接在 APP 中使用系统默认设置的约束。</p>
+<p>一旦你创建了自己的约束，被影响到的系统的默认的约束会被移除掉。没有了原来的这些约束，就不能再准确地定义 view 的大小和位置。这样就编程一个模糊不清的布局。被影响的约束会突然变成红色，Xcode 也会报出一些警告。</p>
+<p>不要慌，你可以逐条添加约束，直到完成布局。一旦你添加了一条约束，你需要按照你的布局方式，去完成整个布局。</p>
+<p>关于如何修复布局警告和错误的更多信息，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/TypesofErrors.html#//apple_ref/doc/uid/TP40010853-CH22-SW1" target="_blank" rel="noopener">Debugging Auto Layout</a>。</p>
+<h3 id="通过拖拽添加约束"><a href="#通过拖拽添加约束" class="headerlink" title="通过拖拽添加约束"></a>通过拖拽添加约束</h3><p>在两个 view 之间创建约束，选择一个 view，按住 control 键拖拽到另一外一个 view 上。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ControlDrag_2x.png" width="187" height="72"><br></div>
+
+<p>当你释放鼠标之后，Interface Builder 会弹出一个 HUD 菜单，菜单中列出了可以选择的约束。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Popup_Menu_2x.png" width="244" height="244"><br></div>
+
+<p>根据你布局的控件和拖拽的方向，Interface Builder 智能的为你选出了一系列的约束供你选择。如果你拖拽时稍微偏向水平方向，你会得到一组设置 view 水平间距的约束，和设置 view 竖直方向对齐方式的约束。如果你拖拽时稍微偏向竖直方向，你会得到一组设置 view 竖直方向的约束，和设置水平方向对齐方式的约束。两种手势中，还可能包含一些其他选项（例如设置 view 之间的关联大小）。</p>
+<blockquote>
+<p><strong>备注</strong></p>
+<p>你可以直接在画布上面使用拖拽手势，设置两个 view 之间的约束。你还可以在画布的大纲视图中通过过拽设置 view 之间的约束，当 view 非常难找到的时候，这种方式是非常有效的。例如在对 top 和 bottom layout guide 设置约束时。在使用大纲视图拖拽设置约束时，Interface Builder 会将所有方向的约束选项都显示出来，不会进行过滤。</p>
+</blockquote>
+<p>Interface Builder 会根据 view 当前的 frame 创建约束。因此，在你设置约束条件之前，给 view 一个合适的位置。在使用 Interface Builder 的大纲视图排列 view 时，最后你应该设置一个符合要求的约束布局。在这过程中，你可能要反复修改约束条件。</p>
+<p>通过拖拽方式设置约束时一个十分便捷的方法；然而，因为约束的常量值是根据 view 当前布局计算的，很容易出现一些小数。如果你想要设置更精确优雅的布局，在设置完约束后，在重新对一些细节进行编辑，或者使用 Pin 和 Align 工具设置约束。</p>
+<p>关于更多通过拖拽设置约束的信息，请查看 “Adding Layout Constraints by Control-Dragging” 这一章节。</p>
+<h3 id="使用-Stack-Align-Pin-和-Resolve-这些工具"><a href="#使用-Stack-Align-Pin-和-Resolve-这些工具" class="headerlink" title="使用 Stack,Align,Pin 和 Resolve 这些工具"></a>使用 Stack,Align,Pin 和 Resolve 这些工具</h3><p>Intercae Builder 为 Auto Layout 提供了四个工具，这四个工具在编辑窗口的右下角，分别为 Stack,Align,Pin 和 Resolve Auto Layout Issues 工具。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Auto_Layout_Tools_2x.png" width="136" height="125"><br></div>
+
+<p>当你想要更好的控制布局约束，或者你想一次性设置多条约束，可以使用 Pin 和 Align 这两个工具。使用这两个工具还有一个好处，那就是你在设置约束时，不需要去精确设置 view 的位置。你可以先大致摆放一下 view，然后添加约束。待添加约束成功之后，更新 view 的 frame，然后 Auto Layout 会替你计算出 view 的正确位置。</p>
+<h4 id="Stack-工具"><a href="#Stack-工具" class="headerlink" title="Stack 工具"></a>Stack 工具</h4><p>Stack 工具可以帮你快速创建一个 stack view。选中一个或者多个控件视图，然后点击 stack 工具。Interface Builder 会将这些选中视图放到一个 stack view，并根据当前内容给 stack view 设置一个合适大小。</p>
+<blockquote>
+<p><strong>备注</strong></p>
+<p>系统会根据相关 view 的位置去设置 stack view 的中心轴和对齐方式.你可以通过属性检查器来改变中心轴和对齐方式（同样还可以修改 view 排布方式和间距）.</p>
+</blockquote>
+<h4 id="Align-工具"><a href="#Align-工具" class="headerlink" title="Align 工具"></a>Align 工具</h4><p>Align 工具可以帮助你快速设置 view 的对齐方式。选中你想要设置的控件视图，然后点击 Align 工具。Interface Builder 会显示一个弹框，里面包含了一系列可以选择的对齐方式。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Align_Tool_Popup_2x.png" width="330" height="345"><br></div>
+
+<p>选中你想要的对齐方式，并点击 Add Constraints 按钮。Interface Builder 会根据选择的对齐方式，自动创建一些约束来使这些 view 对齐。默认情况下，通过这种方式使 view 对齐不会时 view 发生位移（view 变得边缘对齐或者中心对齐），更不会更新 frame。你可以在创建约束前改变这一设置。</p>
+<p>通常情况下，你需要选择两个或者多个 view 才能使用 Align 工具。然而，在设置“水平居中于父视图”和“垂直居中于父视图”时只选择一个 view 就可以设置。你可以通过弹框一次性选择很多条约束，然而实际情况中一般只选择一两条，很少会多于两条。</p>
+<p>更多信息，请查看 “Adding Auto Layout Constraints with the Pin and Align Tools”。</p>
+<h4 id="Pin-工具"><a href="#Pin-工具" class="headerlink" title="Pin 工具"></a>Pin 工具</h4><p>使用 Pin 工具可以帮你快速地定义一个 view 与相邻 view 的相对位置和大小。选中你想设置的 view，然后点击 Pin 工具。Interface Builder 呈现一个弹出框，你可以通过弹框上面的各个选项设置 view 的约束。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Pin_Popover_View_2x.png" width="290" height="416"><br></div>
+
+<p>通过弹框顶部提供的一些功能，你可以设置 view 头部、顶部、尾部或者底部边缘与相邻 view 之间的距离。上面的数字代表当前 view 与其他 view 之间的间距。你可以自定义这个间距，同时你还可以通过点击“小三角”去选择与哪个 view 设置关联。”Constrain to margins” 复选框决定在设置约束时，是相对于 margins 设置，还是相对于 view 边缘设置。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Pin_Settings_2x.png" width="408" height="180"><br></div>
+
+<p>下半部分提供了另外一些功能，你可以通过这些功能设置 view 的宽度和高度。Width 和 Height 显示的是 view 当前的宽高，你可以修改这些值并创建新的约束。Aspect Ratio 显示的也是当前的纵横比，如果你想修改这个比例，你需要重新编辑刚才设置的约束。</p>
+<p>一般情况下，你只可以通过 pin 工具设置一个 view 的约束。然而，你也可以选择多个 view，并将它们设置为相等宽高。你可以一次性设置多条约束，也可以通过设置约束去重置 view 的 frame。当你选择了想要设置的约束之后，点击 Add Constraints 按钮去添加这些约束。</p>
+<p>关于更多信息，请查看 “Adding Auto Layout Constraints with the Pin and Align Tools”。</p>
+<h4 id="Resolve-Auto-Layout-Issues-工具"><a href="#Resolve-Auto-Layout-Issues-工具" class="headerlink" title="Resolve Auto Layout Issues 工具"></a>Resolve Auto Layout Issues 工具</h4><p>Resolve Auto Layout Issues 工具提供了一些修复约束的功能。如下图所示，上半部分的所提供的功能用来修改当前选中 view 的约束；下半部分提供的功能用来修改当前界面内所有 view 的约束。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Resolve_Auto_Layout_Popup_2x.png" width="322" height="260"><br></div>
+
+<p>通过这个工具，你可以基于当前约束，更新 view 的 frame；或者基于当前 view 的位置，更新 view 的约束。你也可以通过这个工具添加漏掉的约束，清除约束，或者重置一系列的约束。</p>
+<p>对于添加或者重置约束的命令，在 <strong>Letting Interface Builder Create Constraints</strong> 章节进行了详细的讨论。</p>
+<h3 id="让-Interface-Builder-自动创建约束"><a href="#让-Interface-Builder-自动创建约束" class="headerlink" title="让 Interface Builder 自动创建约束"></a>让 Interface Builder 自动创建约束</h3><p>Interface Buidler 可以为你创建部分约束或者全部约束。当使用这个功能时，Interface Builder 会根据当前 view 在画布上的位置和大小，尝试创建最合适的约束。所以一定要小心摆放你的 view —— 位置稍有不同，所产生的约束可能会千差万别。</p>
+<p>如果你想通过 Interface Builder 创建所有的约束，你可以点击 Resolve Auto Layout Issues tool -&gt; Add Missing Constraints.通过这个功能可以确定一个清晰的布局。如上面所说，你可以只为选中的 view 添加约束，也可以为当前界面上所有 view 添加约束。</p>
+<p>通过这个功能，你可以快速创建一个清晰、满意的布局。但是，除非界面上的元素十分简单的时候，你可以使用这种方式布局。当界面元素比较复杂的时候，如果你还使用这种方式布局，结果很有可能并不是你想要的。</p>
+<h3 id="查看并编辑约束"><a href="#查看并编辑约束" class="headerlink" title="查看并编辑约束"></a>查看并编辑约束</h3><p>当你创建约束之后，你可能需要编辑这些约束。这里提供了一些方法去编辑这些约束，每种方法都各有各的特色。</p>
+<h4 id="在画布上查看约束"><a href="#在画布上查看约束" class="headerlink" title="在画布上查看约束"></a>在画布上查看约束</h4><p>在下面显示的编辑器中，以有色线的形式显示了当前收到影响的约束。线条的形状、划线类型和线条颜色可以告诉你关于当前约束的很多信息。</p>
+<ul>
+<li><strong>I-BARS(以 T 形作为末端的线).</strong>I-bars 展示了一段间距。这段间距可以是两个 view 之间的间距，也可以是一个 view 的高度或者宽度.</li>
+<li><strong>普通直线(没有任何末端直线).</strong>普通直线表示 view 的对齐方式。例如，Interface Builder 使用简单的一条线来作为两个对齐 view 的基准线.</li>
+<li><strong>实线.</strong>实线代表必须满足的约束(权重 = 1000).</li>
+<li><strong>虚线.</strong>虚线代表可选的约束(权重 &lt; 1000).</li>
+<li><strong>红色线.</strong>标明被这条约束影响的 view 有一个错误.当出现红线时，说明当前布局时一个不满足需求的布局.关于错误约束更多信息，你可以通过 issues 导航器查看，也可以通过点击大纲视图中右上角的红色箭头进行查看.</li>
+<li><strong>橘黄色线.</strong>橘黄色线直接标明了在当前约束条件下，view 没有处于正确的位置。Interface Builder 以虚线的方式显示了 view 应该处于的位置.你可以通过 Resolve Auto Layout Issues tool -&gt; Update Frames 命令将 view 移动到正确的位置。</li>
+<li><strong>蓝色线.</strong>被当前约束影响，并且符合当前约束条件布局的控件.</li>
+<li><strong>等于号.</strong>当通过约束设置两个 view 等宽或者等高时，Interface Builder 会使用两个分隔条来显示着两天约束，每个分隔条上面有一个蓝底白色的等号.</li>
+<li><strong>大于等于号和小于等于号.</strong>Interface Builder 会将表示大于等于或者小于等于关系的约束标志上 &gt;= 或者 &lt;= 符号.</li>
+</ul>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Constraints_In_The_Canvas_2x.png" width="386" height="230"><br></div>
+
+<h4 id="在文件大纲视图中以列表形式查看约束"><a href="#在文件大纲视图中以列表形式查看约束" class="headerlink" title="在文件大纲视图中以列表形式查看约束"></a>在文件大纲视图中以列表形式查看约束</h4><p>Interfae Builder 在文件大纲视图中以列表形式列出了所有的约束，并且按照与之关联的情况进行分组，然后将这组约束放在关联 view 的下方。在下面图中，view 包含了它自己和其子视图，还有与这些视图相关的约束。对于 top layout guide 和 bottom layout guide 被包含在当前界面的跟视图层级下面。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Constraints_In_Document_Outline_2x.png" width="340" height="386"><br></div>
+
+<p>一般情况下，约束分布在大纲视图的各个层级，截止于当前界面根视图那一层级。所以，如果你想要找到所有的约束，你需要逐次展开 view 的层级。</p>
+<p>这些约束条件在列表中一般以伪代码的形式显示。这些伪代码通常包含一系列的视图元素，不能完全显示出来。如果你想查看某条约束的具体信息，在这之前你需要增加大纲视图的宽度。在平时开发中，你可以在画布上选中一条约束，然后通过大纲视图来快速查看约束并校验具体信息。</p>
+<p>在一些简单的布局中，你可以通过大纲视图快速浏览所有的约束。然而，随着布局变得越来越复杂，要想寻找一条具体的约束变得很困难。这时候你最好直接在 view 上面查看，或者选中一条约束后在 Size 检查器中进行审查。</p>
+<h4 id="在-Size-检查器中查看约束"><a href="#在-Size-检查器中查看约束" class="headerlink" title="在 Size 检查器中查看约束"></a>在 Size 检查器中查看约束</h4><p>Size 检查器中列出了与当前选中 view 有关的所有约束。一些必要的约束以实线形式展示，一些可选约束以虚线形式展示。在检查器中，列出了关于约束的很多重要信息。通常包含约束的属性信息和一些其他信息，例如约束的关联关系、常量值、乘积因子和比例等。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Constraints_in_Size_Inspector_2x.png" width="258" height="428"><br></div>
+
+<p>在上述截图上部分的简图中，列出了受影响的相关约束。如果你想单独查看某一条约束的信息，可以在简图中选中这条约束，下面的列表会将其他约束过滤掉以方便查看。</p>
+<p>关于更多信息，请查看 “Viewing the Complete List of Layout Constraints for an Item”。</p>
+<h4 id="检查并编辑约束"><a href="#检查并编辑约束" class="headerlink" title="检查并编辑约束"></a>检查并编辑约束</h4><p>当你在画布上或者在大纲视图中选中一条约束，属性检查器会显示出这条约束的所有属性信息。同时属性检查器还显示了这条约束的权重和标识。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Editing_Constraints_in_the_Attribute_Inspector_2x.png" width="258" height="250"><br></div>
+
+<blockquote>
+<p><strong>备注</strong></p>
+<p>通过约束的 <code>identifier</code> 属性，你可以为约束设置一个别名。这样在调试时，可以在调试日志中辨别出这条约束。</p>
+</blockquote>
+<p>你可以将一条约束标记为 placeholder(预置)。被标记为预置的约束只会存在于设计时。在 APP 运行起来后，这些约束将不被包含在内。一般情况下，如果你想在运行时动态添加约束，你可以添加预置约束。当在 Interface Builder 上有一些约束错误或者警告，但你又不想在实际运行中修改这些约束。你可以通过添加这些临时约束，创建一个清晰地、满足需求的布局，以此来消除一些错误与警告。</p>
+<p>你可以任意改变 Constant,Priority,Multiplier,Relation,Identifier 和 Placeholder 这些属性的值。但是对于 ‘First Item’ 和 ‘Relation’ 这两项，你能做出的修改非常有限。你可以通过 ‘First Item’ 将被约束的两个控件进行对调(反向去设置约束值和比例系数)。你可以通过这些功能改变控件的属性，但是不能改变控件本身。如果你想将约束移动到一个完全不同的控件上，需要先将控件原有约束删除，然后使用新的约束进行替换。</p>
+<p>通过使用 Size 检查器你可以直接编辑一些属性值。随意点击一条约束的 ‘Edit’ 按钮，会出现一个弹窗，通过这个弹窗你可以修改约束的 relationship,constant,priority 或者 multiplier 这些值。或者使用另外一种方式，直接双击一条约束，会打开属性检查器，然后你可以通过属性检查器修改这些值。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Editing_Constraints_in_the_Size_Inspector_2x.png" width="254" height="140"><br></div>
+
+<p>关于更多信息，请查看 “Editing Auto Layout Constraints”.</p>
+<h3 id="设置-Content-Hugging-和-Compression-Resistance-权重"><a href="#设置-Content-Hugging-和-Compression-Resistance-权重" class="headerlink" title="设置 Content-Hugging 和 Compression-Resistance 权重"></a>设置 Content-Hugging 和 Compression-Resistance 权重</h3><p>如果你想设置 view 的 content-hugging 和 compression-resistance 权重(CHCR 权重)，你可以通过画布或者大纲视图选中一个 view。然后打开 Size 检查器，向下滚动属性检查器，直到你看到 CHCR 权重的设置栏。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/CHCR_Priorities_2x.png" width="260" height="172"><br></div>
+
+<p>你还可以通过 Interface Builder 设置 view 的固有大小。Interface Builder 默认情况下使用 view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622600-intrinsiccontentsize" target="_blank" rel="noopener">intrinsicContentSize</a> 方法的返回值。如果你在设计时需要不同的固有大小，可以通过这个功能设置设置一个预置值。这个值只会在 Interface Builder 上面影响到 view 大小，在程序运行时不会起到作用。</p>
+<p>关于更多信息，请查看 “Setting the Placeholder Intrinsic Size for a Custom View”.</p>
+<h3 id="iOS-仅有特征"><a href="#iOS-仅有特征" class="headerlink" title="iOS 仅有特征"></a>iOS 仅有特征</h3><p>iOS 针对 Auto Layout 添加了一些独有的特征。主要包括 top layout guide 和 bottom layout guide、view 的 layout marigins、view 的 readable content guides(最佳阅读区域)和 view 的 semantic content（语义学内容）。</p>
+<h4 id="Top-and-Bottom-Layout-Guides"><a href="#Top-and-Bottom-Layout-Guides" class="headerlink" title="Top and Bottom Layout Guides"></a>Top and Bottom Layout Guides</h4><p>Top and Bottom Layout Guides 代表当前控制器下可视区域的上下两个边界。如果你不想你的内容被一些透明或者半透明的 bar(例如，状态栏，导航栏，tab 栏)遮挡住，使用 Auto Layout 将你的内容布局在边界内。</p>
+<p>Layout Guides 遵循了 <a href="https://developer.apple.com/documentation/uikit/uilayoutsupport" target="_blank" rel="noopener">UILayoutSupport</a> 协议，并提供了一个<code>length</code> 属性，这个属性代表每个 guide 到对应一侧边缘的距离。具体可以这样描述：</p>
+<ul>
+<li>对于 Top Layout Guide,<code>length</code> 代表当前控制器的 view 的上边缘，到遮挡内容的Bar的下边缘的距离。</li>
+<li>对于 Bottom Layout Guide,<code>lenght</code> 代表当前控制器 view 的下边缘，到遮挡内容 Bar(例如 tab bar) 的上边缘的距离。</li>
+</ul>
+<p>这些 guides 在约束布局中充当一个控件，并提供了顶部、底部和高度这些属性。一般情况下，你会约束 view 与 top layout guide 的底部关联，或者约束 view 与 bottom layout guide 的顶部关联。Guides 也提供了 <code>topAnchor</code>,<code>bottomAnchor</code>,和 <code>heightAnchor</code> 属性，通过使用这些属性，可以简化使用代码创建约束的过程。</p>
+<p>当相对于根视图设置约束时，Interface Builder 会提供 top 和 bottom layout guides 作为可选项。如果 view 与 layout guide 相邻，设置上下边缘约束时，Interface Builder 会默认选择使用 guide。你也可以通过使用 Pin 工具，点击小三角，手动设置是与 layout guide 关联还是与 view 本身边缘关联。</p>
+<h4 id="Layout-Margins"><a href="#Layout-Margins" class="headerlink" title="Layout Margins"></a>Layout Margins</h4><p>Auto Layout 针对每个 view 定义了默认内容边距。这些边距代表了 view 的边缘与父视图之间想要添加的一个额外距离。你可以通过 <a href="https://developer.apple.com/documentation/uikit/uiview/1622566-layoutmargins" target="_blank" rel="noopener">layoutMargins</a> 属性或者 <a href="https://developer.apple.com/documentation/uikit/uiview/1622651-layoutmarginsguide" target="_blank" rel="noopener">layoutMarginsGuide</a> 属性来获取 view 的 margins 的值。</p>
+<p><code>layoutMargins</code> 属性是一个 readwrite 属性，你可以用一个 <a href="https://developer.apple.com/documentation/uikit/uiedgeinsets" target="_blank" rel="noopener">UIEdgeInsets</a> 类型数据结构来对其赋值，也可以通过它的 get 方法返回一个这样的数据结构。<code>layoutMarginsGuide</code> 只提供了 readOnly 属性，因此你可以通过 get 方法返回一个 <a href="https://developer.apple.com/documentation/uikit/uilayoutguide" target="_blank" rel="noopener">UILayoutGuide</a> 对象。除此之外，你还可以通过设置 view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622653-preservessuperviewlayoutmargins" target="_blank" rel="noopener">preservesSuperviewLayoutMargins</a> 属性去决定是否去适应父视图的边距。</p>
+<p>一个 view 的默认边距是 8-point。你可以根据需要去改变这个值。</p>
+<blockquote>
+<p><strong>备注</strong></p>
+<p>系统自动为一个 view controller 的根视图设置了边距。顶部和底部边距设置为 0，方便内容延伸到 bar 的下面（如果需要的话）。两边的边距会根据当前 controller 展示方式而改变，这个边距可以为 16-point 或者 20-point。你不能改变这些边距。</p>
+</blockquote>
+<p>当你为一个 view 设置与父视图相关联的约束时，你应该使用 Layout Margins 而不是使用 view 的 edge。在 UIKit 中，<a href="https://developer.apple.com/documentation/appkit/nslayoutattribute" target="_blank" rel="noopener">NSLayoutAttribute</a> 定义了一系列的属性来代表上部、下部、头部、尾部、左部和右部的边距。同时还包括了与 center X 和 center Y 边距相关的枚举。</p>
+<p>在 Interface Builder 中，通过拖拽方式为一个 view 和它的父视图之间设置约束时，默认情况下使用的是 “边距属性” 来设置。当你使用 Pin 工具设置约束时，你可以勾选 “Constrain to margins” 这个复选框。如果这一项被勾选，将会通过设置父视图边距的方式来满足约束；如果未被勾选，则通过设置与父视图边缘距离的方式来满足约束。类似的，当通过 Attribute 检查器编辑约束时，在第一个 Item 和第二个 Item 的展开菜单中有一项为 “Relative to margin”。如果勾选这一项，则按照 “边距属性” 方式设置约束；没有勾选则按照边缘距离方式设置约束。</p>
+<p>最后，当你通过编码来设置与父视图相关联的约束时，可以使用 <code>layoutMarginsGuide</code> 属性直接创建与 layout guide 相关联的约束。</p>
+<h4 id="Readable-Content-Guides"><a href="#Readable-Content-Guides" class="headerlink" title="Readable Content Guides"></a>Readable Content Guides</h4><p>view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622644-readablecontentguide" target="_blank" rel="noopener">readableContentGuide</a> 属性返回了一个 layout guide，这个 layout guide 定义了对象在 view 内部的最佳阅读区域。理想情况下，内容在这个区域内，用户不需要摆头就可以轻松阅读。</p>
+<p>这条 guide 将内容集中在 view 的边距内，永远不会超出边距。最佳阅读区域的大小会随着字体大小的改变而改变。当用户选择较大字体时，系统会创建一个更宽阔的阅读区域。因为有时候用户阅读时，会距离设备稍远一些，这时候系统需要进行适应以达到最佳阅读效果。</p>
+<p>在 Interface Builder 中，你既可以通过设置来确定是用 layout margins 来代表 view 的边距，还是用 “最佳阅读区域” 来制定 view 的边距。选中一个 view（一般是 view controller 的根视图），然后打开 Size 检查器。如果你勾选了 “Follow Readable Width” 复选框，在设置约束时，会按照 “最佳阅读区域” 来制定 view 的边距。</p>
+<blockquote>
+<p><strong>备注</strong></p>
+<p>在大多数设备上面，readable content guide 和 layout margins 没有太大区别。仅当在 iPad 上并且横屏时，这两个项有比较明显的区别。</p>
+</blockquote>
+<h4 id="语义内容"><a href="#语义内容" class="headerlink" title="语义内容"></a>语义内容</h4><p>如果你使用头部和尾部约束进行布局，当你将语言从 <strong>左-&gt;右</strong> 切换为 <strong>右-&gt;左</strong> 时，布局会自动改变左右方向。然而，有些布局元素是不需要根据阅读方向改变的。例如，根据物理方位（上下左右）设置的一些 button，无论阅读方向如何它们都保持不变。</p>
+<p>view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute" target="_blank" rel="noopener">semanticContentAttribute</a> 属性决定了 view 是否会随着阅读方向而改变布局方位。</p>
+<p>在 Interface Builder 中，你可以在属性检查器中手动设置 Semantic 项。如果设置项为 Unspecified，view 的内容会随着阅读方向改变而改变；如果设置为 Spatial，Playback 或者 Force Left-to-Right, view 设置约束时，leading edges 代表左边缘，trailing edges 代表右边缘；如果设置为 Force Right-to-Left，则 leading edges 代表右边缘，trailing edges 代表左边缘。</p>
+<h3 id="经验法则"><a href="#经验法则" class="headerlink" title="经验法则"></a>经验法则</h3><p>下面一些建议可以帮助你成功地使用 Auto Layout。如果你不遵循这些规则，将会产生一些异常。所以，在设计时一定要考虑清楚。</p>
+<ul>
+<li>永远不要使用 view 的 frame、bounds 或者 center 这些属性来指定 view 具体几何结构.</li>
+<li>尽可能使用 stack view.<br><br> Stack view 会自动为其内容设置约束，你只需要对 stack view 设置简单的约束即可.除非使用 stack view 不能满足你的需求，否则尽量使用 stack view，避免进行自定义布局.</li>
+<li>与 view 相邻的一些控件设置约束.<br><br> 如果你有两个 button 并排在一起，直接将第二个 button 的头部与第一个 button 的尾部关联。最好不要使第二个 button 越过第一个 button 直接与父视图的边缘想关联。</li>
+<li>避免给 view 设置固定宽高.<br><br>使用 Auto Layout 目的就是能够让 view 进行动态适应。如果将 view 的大小设置为固定值将会使其失去这一特性.</li>
+<li>如果在设置约束时感觉很困难，尝试使用 Pin 和 Align 这两个工具.尽管使用这两个工具设置约束可能会相对于拖拽方式稍慢一些，但是它可以让你在创建约束前精准地控制一些数值。这些小功能会非常有用，特别是当你初次使用 Auto Layout 时.</li>
+<li>当你自动更新一个控件的 frame 时，需要小心执行。如果一个控件没有足够的约束来确定它的大小和位置，那么更新行为将是未定义的.有时候更新 frame 之后，view 会消失不见。这是因为 view 的大小变为了 0 或者它的位置跑到了屏幕外面.<br><br>如果有需要的话，你可以随时试着更新一下控件的 frame，然后撤销操作.</li>
+<li>确定你的所有 view 都有一个有意义的命名。这样在使用工具进行操作时能够很容易作出区分.<br><br>系统会根据 label 的内容和 button 的标题自动为控件命名.对于其他的 view，你可能需要通过 Identify 检查器为它们设置一个具体的标识（或者直接在大纲视图中双击 view 并编辑它的名字）.</li>
+<li>使用 leading 和 trailing 约束，而不是 right 和 left 约束.<br><br>你可以通过设置 view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute" target="_blank" rel="noopener">semanticContentAttribute</a> 属性（iOS）或者 <a href="https://developer.apple.com/documentation/appkit/nsview/1483254-userinterfacelayoutdirection" target="_blank" rel="noopener">userInterfaceLayoutDirection</a> 属性（OS X）来确定 leading 和 trailing 边缘的具体意义.</li>
+<li>在 iOS 系统中国，当约束一个控件与 view controller 的根视图边缘做关联时，使用以下约束:</li>
+<li><strong>Horizontal constraints</strong>.对于大多数控件，会通过约束设置与父视图距离为 0.系统会根据设备型号和 view controller 展示形式，自动提供一些间距.<br><br>对于文本类对象，会根据边距设置情况充满根视图，当然在布局时使用的是 “最佳阅读区域” 设置的边距，而不是普通边距.<br><br>对于其他控件，会直接铺满视图的边缘（例如，背景图片），在布局时使用的是 leading 和 trailing edges.</li>
+<li><strong>Vertical constraints</strong>.如果想让 view 延伸到一些 bar 的下面,通过设置上下边距来控制.这在设置 scroll view 布局时十分常见,在 scroll view 中经常允许内容直接滚动到 bar 的下面.需要注意的是，你需要改变 scroll view 的 <a href="https://developer.apple.com/documentation/uikit/uiscrollview/1619406-contentinset" target="_blank" rel="noopener">contentInset</a> 和 <a href="https://developer.apple.com/documentation/uikit/uiscrollview/1619427-scrollindicatorinsets" target="_blank" rel="noopener">scrollIndicatorInsets</a> 属性来确定内容正确的初始位置.<br><br>如果不想让 view 延伸到 bar 的下面,使用 top 和 bottom layout guides 来设置约束.</li>
+<li>当你通过编码实例化一个 view 时，必须将它的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622572-translatesautoresizingmaskintoco" target="_blank" rel="noopener">translatesAutoresizingMaskIntoConstraints</a> 属性设置为 <code>NO</code>.否则在默认情况下，系统会基于 view 的 frame 和 autoresizing mask 自动创建一系列的约束.当你创建自己的约束时，他们必然会与自动创建的一些约束发生冲突.这样的布局时不符合要求的.</li>
+<li>需要意识到 OS X 系统和 iOS 系统计算布局的方式是不同的.<br><br>在 OS X 系统中，Auto Layout 即可以改变 window 内容的布局，也可以改变 window 的布局.<br><br>在 iOS 系统中,系统会通过当前场景的大小和布局.Auto Layout 只能改变场景中内容的大小和位置.<br><br>这些不同看起来无关紧要，但是他对你布局的设计有着很大影响，特别是使用一些属性的时候.</li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a href="/2018/04/13/iOS Auto Layout-栈视图（译)/" class="prev">PREV</a><a href="/2018/04/08/iOS Auto Layout-约束的本质（译)/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2018 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>

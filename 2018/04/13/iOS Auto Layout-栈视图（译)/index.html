@@ -1,0 +1,254 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> iOS Auto Layout-栈视图（译） · Hexo</title><meta name="description" content="iOS Auto Layout-栈视图（译） - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/sunchongsheng" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/pinggod" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">iOS Auto Layout-栈视图（译）</h1><div class="post-info">Apr 13, 2018</div><div class="post-content"><a id="more"></a>
+<p>下面的内容主要介绍了如何使用 stack view 创建一些复杂的布局。Stack view 是一个很强悍的工具，使<br>用它设计用户界面会十分便捷。Stack view 的一些属性在很大程度上只能控制它的子视图如何排列。你可以通过增加一些额外的自定义约束，来更加精确地控制子视图的排列方式；然而，那样将会使布局变得十分复杂。</p>
+<p>有关于这部分内容的源码，请查看 <a href="https://developer.apple.com/sample-code/xcode/downloads/Auto-Layout-Cookbook.zip" target="_blank" rel="noopener">Auto Layout Cookbook</a> 这个项目。</p>
+<h3 id="简单的-Stack-View"><a href="#简单的-Stack-View" class="headerlink" title="简单的 Stack View"></a>简单的 Stack View</h3><p>这里用了一个竖直排版的 stack view 对一个 label、一个 image view 和一个 button 进行了布局。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Simple_Stack_View_Screenshot_2x.png" width="375" height="670"><br></div>
+
+<h4 id="视图和约束"><a href="#视图和约束" class="headerlink" title="视图和约束"></a>视图和约束</h4><p>在 Interface Builder 上，拖拽一个垂直方向排布的 stack view，然后在上面添加 flowers label、image view 和 edit button。然后按照下面的方式设置约束条件。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/simple_stack_2x.png" width="238" height="428"><br></div>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. Stack View.Leading = Superview.LeadingMargin</span><br><span class="line">2. Stack View.Trailing = Superview.TrailingMargin</span><br><span class="line">3. Stack View.Top = Top Layout Guide.Bottom + Standard</span><br><span class="line">4. Bottom Layout Guide.Top = Stack View.Bottom + Standard</span><br></pre></td></tr></table></figure>
+<h4 id="属性"><a href="#属性" class="headerlink" title="属性"></a>属性</h4><p>在属性检查器中，设置以下属性：</p>
+<table>
+<thead>
+<tr>
+<th>Stack</th>
+<th>Axis</th>
+<th>Alignment</th>
+<th>Distribution</th>
+<th>Spacing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Stack View</strong></td>
+<td>Vertical</td>
+<td>Fill</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+<p>下一步，给 Image View 设置以下属性：</p>
+<table>
+<thead>
+<tr>
+<th>View</th>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image View</strong></td>
+<td>Image</td>
+<td>（一张花的图片）</td>
+</tr>
+<tr>
+<td><strong>Image View</strong></td>
+<td>Mode</td>
+<td>Aspect Fit</td>
+</tr>
+</tbody>
+</table>
+<p>最后，在 Size 检查器中，设置 Image View 的 content-hugging 和 compression-resistance (CHCR) 权重。</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Horizontal hugging</th>
+<th>Vertical Hugging</th>
+<th>Horizontal resistance</th>
+<th>Vertical resistance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image View</strong></td>
+<td>250</td>
+<td>249</td>
+<td>750</td>
+<td>749</td>
+</tr>
+</tbody>
+</table>
+<h4 id="讨论"><a href="#讨论" class="headerlink" title="讨论"></a>讨论</h4><p>你需要通过设置约束，将 stack view 固定在 superview 上，另一方面，你还需要处理 stack view 的内部布局逻辑。</p>
+<p>在上图中，stack view 以一个标准边距充满了整个父视图。Stack View 中的子视图通过调整充满整个 stack view 的边缘。水平方向上，每个视图通过拉伸以适应 stack view 的宽度。竖直方向上，view 按照之前设置的 CHCR 权重来进行拉伸。Image View 应该按照预留空间的大小进行适配。因此，在竖直方向上，image view 的 CHCR 权重应该要低于 label 和 button 的默认权重。</p>
+<p>最后，设置 image view 的 mode 为 Aspect Fit。这个设置会强制 image 去调整比例以适应 image view 的大小，以防止 image 因为 image view 的改变而比例失调。这样设置可以允许 stack view 随意改变大小，不用担心图片变形。</p>
+<p>关于如何通过布局使一个 view 充满 superview 的更多内容，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/WorkingwithSimpleConstraints.html#//apple_ref/doc/uid/TP40010853-CH12-SW5" target="_blank" rel="noopener">Attributes</a> 和 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/WorkingwithSimpleConstraints.html#//apple_ref/doc/uid/TP40010853-CH12-SW4" target="_blank" rel="noopener">Adaptive Single View</a>。</p>
+<h3 id="嵌套-Stack-Views"><a href="#嵌套-Stack-Views" class="headerlink" title="嵌套 Stack Views"></a>嵌套 Stack Views</h3><p>这部分内容讲述了一个由多重嵌套的 stack view 构建成的一个复杂的布局。但是，在下面这个布局示例中，并不是只用 stack view 就能创建的，还需要一些额外的约束条件，更加精确地控制布局。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Nested_Stack_Views_Screenshot_2x.png" width="375" height="670"><br></div>
+
+<p>添加完视图层级之后，如果添加约束将在下一小节讲解。</p>
+<h4 id="视图和约束-1"><a href="#视图和约束-1" class="headerlink" title="视图和约束"></a>视图和约束</h4><p>当处理一个嵌套 stack view 布局时，比较容易的做法是从里向外布局。例如在下图中，先在 Interface Builder 布局 “姓名” 这一行。将 label 和 text field 并排放在一起，然后选中它们两个，点击 Editor &gt; Embed In &gt; Stack View 菜单项。这将为这一行创建一个水平布局的 stack view。</p>
+<p>然后，布局剩下的 “姓名” 相关的两行，选中，然后点击 Editor &gt; Embed In &gt; Stack View 菜单项，将会创建另外两个水平布局的 stack view。类似的，完成如下显示的一个布局。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/nested_stack_views_2x.png" width="520" height="554"><br></div>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1. Root Stack View.Leading = Superview.LeadingMargin</span><br><span class="line">2. Root Stack View.Trailing = Superview.TrailingMargin</span><br><span class="line">3. Root Stack View.Top = Top Layout Guide.Bottom + 20.0</span><br><span class="line">4. Bottom Layout Guide.Top = Root Stack View.Bottom + 20.0</span><br><span class="line">5. Image View.Height = Image View.Width</span><br><span class="line">6. First Name Text Field.Width = Middle Name Text Field.Width</span><br><span class="line">7. First Name Text Field.Width = Last Name Text Field.Width</span><br></pre></td></tr></table></figure>
+<h4 id="属性-1"><a href="#属性-1" class="headerlink" title="属性"></a>属性</h4><p>每个 stack view 有一系列它们自己的属性，这些属性定义了 stack view 里的内容如何排布。在属性检查器中，你可以看到如下属性：</p>
+<table>
+<thead>
+<tr>
+<th>Stack</th>
+<th>Axis</th>
+<th>Alignment</th>
+<th>Distribution</th>
+<th>Spacing</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>First Name</strong></td>
+<td>Horizontal</td>
+<td>First Baseline</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Middle Name</strong></td>
+<td>Horizontal</td>
+<td>First Baseline</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Last Name</strong></td>
+<td>Horizontal</td>
+<td>First Baseline</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Name Rows</strong></td>
+<td>Vertical</td>
+<td>Fill</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Upper</strong></td>
+<td>Horizontal</td>
+<td>Fill</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Button</strong></td>
+<td>Horizontal</td>
+<td>Fist Baseline</td>
+<td>Fill Equally</td>
+<td>8</td>
+</tr>
+<tr>
+<td><strong>Root</strong></td>
+<td>Vertical</td>
+<td>Fill</td>
+<td>Fill</td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+<p>除此之外，在布局中设置 text view 的背景色为亮灰色。这样当布局发生变化时，你可以很容易看到 text view 的具体大小。</p>
+<table>
+<thead>
+<tr>
+<th>View</th>
+<th>Attribute</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Text View</strong></td>
+<td>Background</td>
+<td>Light Gray Color</td>
+</tr>
+</tbody>
+</table>
+<p>最后，CHCR 的权重决定了在填充剩余空间时哪个 view 应该被拉伸。在 Size 检查器中，你可是看到如下每个 view CHCR 的权重：</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Horizontal</th>
+<th>Vertical hugging</th>
+<th>Horizontal resistance</th>
+<th>Vertical resistance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image View</strong></td>
+<td>250</td>
+<td>250</td>
+<td>48</td>
+<td>48</td>
+</tr>
+<tr>
+<td><strong>Text View</strong></td>
+<td>250</td>
+<td>249</td>
+<td>250</td>
+<td>250</td>
+</tr>
+<tr>
+<td><strong>First,Middle,and Last Name Labels</strong></td>
+<td>251</td>
+<td>251</td>
+<td>750</td>
+<td>750</td>
+</tr>
+<tr>
+<td><strong>First,Middle,and Last Text Fields</strong></td>
+<td>48</td>
+<td>250</td>
+<td>749</td>
+<td>750</td>
+</tr>
+</tbody>
+</table>
+<h4 id="讨论-1"><a href="#讨论-1" class="headerlink" title="讨论"></a>讨论</h4><p>在这部分内容中，多个 stack view 互相作用，共同完成了一个复杂的布局。但是，这些 stack view 并不能独立完成所有的布局效果。例如，在一个 image view 改变大小时，里面的 image 应该保持纵横比不变。不幸的是，在 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/LayoutUsingStackViews.html#//apple_ref/doc/uid/TP40010853-CH11-SW2" target="_blank" rel="noopener">简单的 Stack View</a> 这部分内容用的的技术并没有用到这里。在这里，image 需要紧贴 image view 头部和底部边缘。如果将 image view 的 mode 设置为 Aspect Fit 可能会导致上下留白。幸运的是，在这里 image 的纵横比永远保持为正方形，所以你可以让 image 完全充满 image view，然后约束 image view 的纵横比为 1:1。</p>
+<blockquote>
+<p><strong>备注</strong></p>
+<p>在 Interface Builder 中，一个纵横比的约束是一个 view 的高度和宽度约束的合成。Interface Builder 可以以多种方式去显示多条约束。一般情况下，对于纵横比约束，会以一个比例式的形式展示。例如 一个 <code>View.Width = View.Height</code> 约束代表一个 1:1 的长宽比约束。</p>
+</blockquote>
+<p>除此之外，所有的 text fields 宽度应该相同。不幸的是，他们被分布在不同的 stack view 中，这样就不能通过 stack view 进行处理。因此，你必须对这些 view 添加 equal width 约束。</p>
+<p>和其他简单的 stack view 一样，你需要改变其中一些 stack view 的 CHCR 属性。以此来定义当父视图的大小发生改变时，view 应该如何压缩或扩展。</p>
+<p>竖直方向上，你想让 text view 充满整个 stack view。因此在进行设置时，text view 的 Vertical Hugging 权重一定要低于其他 view。</p>
+<p>水平方向上，Label 的大小一般为固有内容的大小。当 text field 进行填充适配时，默认的 CHCR 权重设置可以使 label 不会受到挤压。虽然 Interface Builder 早已经将 label 的 content hugging 权重设置为 251，使它要高于 text fields;但是，你仍然需要将 text fields 的 CHCR 权重设置的更低。</p>
+<p>为了使 image view 可以和 name row stack view 一样高，需要适当对其进行压缩。然而，stack view 为了让内容能显示出来，只会尽可能地扩大空间。这意味着一定要将 image view 的 vertical compression resistance 设置的非常低，这样 image view 才会压缩而不是充满 stack view。除此之外，设置 image view 的纵横比之后，会使布局变得十分复杂，因为设置纵横比之后，水平和竖直方向将会相互作用。这意味着还需要将 text fields 的 horizontal content hugging 权重设置一个较低值，以此避免 image view 被压缩。综合考虑，将权重设置为 48 或者更低最为合适。</p>
+<h3 id="动态-Stack-View"><a href="#动态-Stack-View" class="headerlink" title="动态 Stack View"></a>动态 Stack View</h3><p>这部分内容展示了如何在运行时动态插入或删除一条 item。所有的变化以动画形式展示。除此之外，图中的 stack view 加在了一个 scroll view 内部，如果一屏幕展示不开，可以进行滚动。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Dynamic_Stack_View_Screenshot_2x.png" width="440" height="380"><br></div>
+
+<blockquote>
+<p><strong>备注</strong></p>
+<p>这部分内容意在介绍如何动态操作 stack view，以及如何在 scroll view 中使用 stack view。在真实的 APP 开发中，这种场景一般使用 <a href="https://developer.apple.com/documentation/uikit/uitableview" target="_blank" rel="noopener">UITableView</a>。一般情况下，你不应该使用动态 stack view 来代替 table view。并且，使用这种方式创建的界面不能灵活使用其他的布局技巧。</p>
+</blockquote>
+<h4 id="视图和约束-2"><a href="#视图和约束-2" class="headerlink" title="视图和约束"></a>视图和约束</h4><p>一开始的界面十分简单。在画布上放置一个 scroll view 并使其充满画布。然后，在 scroll view 中放置一个 stack view，并且在 stack view 中放置一个 button。所有控件放置好之后，设置如下约束：</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/dynamic_stack_view_2x.png" width="280" height="366"><br></div>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">1. Scroll View.Leading = Superview.LeadingMargin</span><br><span class="line">2. Scroll View.Trailing = Superview.TrailingMargin</span><br><span class="line">3. Scroll View.Top = Superview.TopMargin</span><br><span class="line">4. Bottom Layout Guide.Top = Scroll View.Bottom + 20.0</span><br><span class="line">5. Stack View.Leading = Scroll View.Leading</span><br><span class="line">6. Stack View.Trailing = Scroll View.Trailing</span><br><span class="line">7. Stack View.Top = Scroll View.Top</span><br><span class="line">8. Stack View.Bottom = Scroll View.Bottom</span><br><span class="line">9. Stack View.Width = Scroll View.Width</span><br></pre></td></tr></table></figure>
+<h4 id="属性-2"><a href="#属性-2" class="headerlink" title="属性"></a>属性</h4><p>在 Attributes 检查器中，给 stack view 设置如下属性：</p>
+<p>Stack | Axis | Alignment | Distribution | Spacing<br><strong>Stack View</strong> | Vertical | Fill | Equal Spacing | 0</p>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>这里会通过使用一些代码进行布局。创建一个自定义的 view controller，然后将 scroll view 和 stack view 以 outlets 的方式引入。</p>
+<figure class="highlight mm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> DynamicStackViewController: <span class="built_in">UIViewController</span> &#123;</span><br><span class="line"></span><br><span class="line">@IBOutlet <span class="keyword">weak</span> private var scrollView: <span class="built_in">UIScrollView</span>!</span><br><span class="line">@IBOutlet <span class="keyword">weak</span> private var stackView: <span class="built_in">UIStackView</span>!</span><br><span class="line"></span><br><span class="line"><span class="comment">// Method implementations will go here...</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，重写 <a href="https://developer.apple.com/documentation/uikit/uiviewcontroller/1621495-viewdidload" target="_blank" rel="noopener">viewDidLoad</a> 方法，在其中设置 scroll view 的位置。如果你想让 scroll view 的内容开始于 status bar 的下面，按照下面代码设置：</p>
+<figure class="highlight mm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">override func viewDidLoad() &#123;</span><br><span class="line"><span class="keyword">super</span>.viewDidLoad()</span><br><span class="line"></span><br><span class="line"><span class="comment">// setup scrollview</span></span><br><span class="line">let insets = <span class="built_in">UIEdgeInsetsMake</span>(<span class="number">20.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">0.0</span>)</span><br><span class="line">scrollView.contentInset = insets</span><br><span class="line">scrollView.scrollIndicatorInsets = insets</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>现在，为 button 添加一个 action。</p>
+<figure class="highlight mm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MARK: Action Methods</span></span><br><span class="line"></span><br><span class="line">@IBAction func addEntry(sender: AnyObject) &#123;</span><br><span class="line"></span><br><span class="line">let stack = stackView</span><br><span class="line">let index = stack.arrangedSubviews.count - <span class="number">1</span></span><br><span class="line">let addView = stack.arrangedSubviews[index]</span><br><span class="line"></span><br><span class="line">let scroll = scrollView</span><br><span class="line">let offset = <span class="built_in">CGPoint</span>(x: scroll.contentOffset.x,</span><br><span class="line">y: scroll.contentOffset.y + addView.frame.size.height)</span><br><span class="line"></span><br><span class="line">let newView = createEntry()</span><br><span class="line">newView.hidden = <span class="literal">true</span></span><br><span class="line">stack.insertArrangedSubview(newView, atIndex: index)</span><br><span class="line"></span><br><span class="line"><span class="built_in">UIView</span>.animateWithDuration(<span class="number">0.25</span>) &#123; () -&gt; Void <span class="keyword">in</span></span><br><span class="line">newView.hidden = <span class="literal">false</span></span><br><span class="line">scroll.contentOffset = offset</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法首先计算了 scroll view 的 offset，然后创建了一个新视图。将新视图设置为隐藏并加入 stack view。被隐藏的视图不会影响 stack view 的显示和布局——所以 stack view 的显示效果保持不变。然后，在一个动画的 block 中，设置 view 的显示并更新 scroll view 的 offset，使 view 以动画形式展示出来。</p>
+<p>类似的，添加一个删除视图的方法。但是，与 <code>addEntry</code> 方法不同，这个方法不会直接关联 Interface Builder 上的任何控件。而是在 view 创建时，以编码的方式关联上每个 view。</p>
+<figure class="highlight mm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">func deleteStackView(sender: <span class="built_in">UIButton</span>) &#123;</span><br><span class="line"><span class="keyword">if</span> let view = sender.superview &#123;</span><br><span class="line"><span class="built_in">UIView</span>.animateWithDuration(<span class="number">0.25</span>, animations: &#123; () -&gt; Void <span class="keyword">in</span></span><br><span class="line">view.hidden = <span class="literal">true</span></span><br><span class="line">&#125;, completion: &#123; (success) -&gt; Void <span class="keyword">in</span></span><br><span class="line">view.removeFromSuperview()</span><br><span class="line">&#125;)</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个方法里，在 animation 的 block 中隐藏 view。完成动画之后，将 view 从 view 层级中移除。这样就可以使 view 自动从 stack view 中移除。</p>
+<p>添加到 stack view 中的条目可以是任意样式，在这个例子中，每个条目是一个 stack view，这个 stack view 中包含了一个显示日期的 label，一个显示十六进制字符串的 label，一个删除 button。</p>
+<figure class="highlight mm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MARK: - Private Methods</span></span><br><span class="line">private func createEntry() -&gt; <span class="built_in">UIView</span> &#123;</span><br><span class="line">let date = <span class="built_in">NSDateFormatter</span>.localizedStringFromDate(<span class="built_in">NSDate</span>(), dateStyle: .ShortStyle, timeStyle: .NoStyle)</span><br><span class="line">let number = <span class="string">"\(randomHexQuad())-\(randomHexQuad())-\(randomHexQuad())-\(randomHexQuad())"</span></span><br><span class="line"></span><br><span class="line">let stack = <span class="built_in">UIStackView</span>()</span><br><span class="line">stack.axis = .Horizontal</span><br><span class="line">stack.alignment = .FirstBaseline</span><br><span class="line">stack.distribution = .Fill</span><br><span class="line">stack.spacing = <span class="number">8</span></span><br><span class="line"></span><br><span class="line">let dateLabel = <span class="built_in">UILabel</span>()</span><br><span class="line">dateLabel.text = date</span><br><span class="line">dateLabel.font = <span class="built_in">UIFont</span>.preferredFontForTextStyle(<span class="built_in">UIFontTextStyleBody</span>)</span><br><span class="line"></span><br><span class="line">let numberLabel = <span class="built_in">UILabel</span>()</span><br><span class="line">numberLabel.text = number</span><br><span class="line">numberLabel.font = <span class="built_in">UIFont</span>.preferredFontForTextStyle(<span class="built_in">UIFontTextStyleHeadline</span>)</span><br><span class="line"></span><br><span class="line">let deleteButton = <span class="built_in">UIButton</span>(type: .RoundedRect)</span><br><span class="line">deleteButton.setTitle(<span class="string">"Delete"</span>, forState: .Normal)</span><br><span class="line">deleteButton.addTarget(<span class="keyword">self</span>, action: <span class="string">"deleteStackView:"</span>, forControlEvents: .TouchUpInside)</span><br><span class="line"></span><br><span class="line">stack.addArrangedSubview(dateLabel)</span><br><span class="line">stack.addArrangedSubview(numberLabel)</span><br><span class="line">stack.addArrangedSubview(deleteButton)</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> stack</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private func randomHexQuad() -&gt; String &#123;</span><br><span class="line"><span class="keyword">return</span> <span class="built_in">NSString</span>(format: <span class="string">"%X%X%X%X"</span>,</span><br><span class="line">arc4random() % <span class="number">16</span>,</span><br><span class="line">arc4random() % <span class="number">16</span>,</span><br><span class="line">arc4random() % <span class="number">16</span>,</span><br><span class="line">arc4random() % <span class="number">16</span></span><br><span class="line">) as String</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="讨论-2"><a href="#讨论-2" class="headerlink" title="讨论"></a>讨论</h4><p>在这个样例中，stack view 可以在 APP 运行时动态添加或删除 view。然后 stack view 可以根据内容变化动态改变布局。最后，这里有一些重要的点值得我们记住：</p>
+<ul>
+<li>隐藏的 view 一直存在于 stack view 的子 view 数组中. 然而，它们不会展示，也不会影响布局和其他子 view.</li>
+<li>将一个 view 加到 stack view 的子 view 数组中时，这个 view 会自动添加到 view 层级.</li>
+<li>将一个 view 从 stack 的子 view 数组中移除时，不会从 view 层级中自动移除；将一个 view 从 view 层级中移除，同样也不会从 stack 的子 view 数组中移除.</li>
+<li>在 iOS 系统中，view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622585-ishidden" target="_blank" rel="noopener">hidden</a> 属性通常情况下么有动画效果.然而在这里，将 view 放到 stack view 的子 view 里面时会有动画效果，这个效果是 stack view 实现的，而不是 view 通过使用 <code>hidden</code> 属性实现的.</li>
+</ul>
+<p>这部分内容同时还简单介绍了如何在 scroll view 中使用自动布局。这里在 stack view 和 scroll view 之间设置了一系列的约束，以此来定义 scroll view 内容区域大小。在水平方向上，设置 stack view 的宽度充满 scroll view。竖直方向上，scroll view 的 content size 由 stack view 的大小来决定。stack view 会随着加入的条目越多而变得越长。相应的，scroll view 滚动区域也会随之增加，以适应 stack view 的内容大小。</p>
+<p>关于更多信息，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/WorkingwithScrollViews.html#//apple_ref/doc/uid/TP40010853-CH24-SW1" target="_blank" rel="noopener">Working with Scroll Views</a>.</p>
+</div></article></div></main><footer><div class="paginator"><a href="/2018/04/08/iOS Auto Layout-使用 Interface Builder 布局（译)/" class="next">NEXT</a></div><div class="copyright"><p>© 2015 - 2018 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
