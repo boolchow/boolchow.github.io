@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2018/02/13/annual-report-2017/</loc>
+    
+    <lastmod>2018-06-06T09:35:07.096Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2016/09/08/Reduce-crash/</loc>
     
     <lastmod>2018-06-03T13:16:19.796Z</lastmod>
@@ -152,13 +159,6 @@
     <loc>http://yoursite.com/2018/01/10/SQLite-Queryplanner/</loc>
     
     <lastmod>2018-06-03T13:12:53.834Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/2018/02/13/annual-report-2017/</loc>
-    
-    <lastmod>2018-06-03T13:12:43.285Z</lastmod>
     
   </url>
   
