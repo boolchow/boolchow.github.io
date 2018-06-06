@@ -18,8 +18,8 @@
   
   <entry>
     <title>iOS Auto Layout-栈视图（译）</title>
-    <link href="http://yoursite.com/2018/04/13/iOS%20Auto%20Layout-%E6%A0%88%E8%A7%86%E5%9B%BE%EF%BC%88%E8%AF%91)/"/>
-    <id>http://yoursite.com/2018/04/13/iOS Auto Layout-栈视图（译)/</id>
+    <link href="http://yoursite.com/2018/04/13/iOS-AutoLayout-StackView/"/>
+    <id>http://yoursite.com/2018/04/13/iOS-AutoLayout-StackView/</id>
     <published>2018-04-13T12:22:46.000Z</published>
     <updated>2018-06-03T13:15:18.478Z</updated>
     
@@ -44,8 +44,8 @@
   
   <entry>
     <title>iOS Auto Layout-使用 Interface Builder 布局（译）</title>
-    <link href="http://yoursite.com/2018/04/08/iOS%20Auto%20Layout-%E4%BD%BF%E7%94%A8%20Interface%20Builder%20%E5%B8%83%E5%B1%80%EF%BC%88%E8%AF%91)/"/>
-    <id>http://yoursite.com/2018/04/08/iOS Auto Layout-使用 Interface Builder 布局（译)/</id>
+    <link href="http://yoursite.com/2018/04/08/iOS-AutoLayout-Working-IB/"/>
+    <id>http://yoursite.com/2018/04/08/iOS-AutoLayout-Working-IB/</id>
     <published>2018-04-08T14:02:47.000Z</published>
     <updated>2018-06-03T13:15:04.347Z</updated>
     
@@ -70,8 +70,8 @@
   
   <entry>
     <title>iOS Auto Layout-约束的本质（译）</title>
-    <link href="http://yoursite.com/2018/04/08/iOS%20Auto%20Layout-%E7%BA%A6%E6%9D%9F%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%88%E8%AF%91)/"/>
-    <id>http://yoursite.com/2018/04/08/iOS Auto Layout-约束的本质（译)/</id>
+    <link href="http://yoursite.com/2018/04/08/iOS-AutoLayout-Anatomy/"/>
+    <id>http://yoursite.com/2018/04/08/iOS-AutoLayout-Anatomy/</id>
     <published>2018-04-08T06:23:40.000Z</published>
     <updated>2018-06-03T13:15:13.394Z</updated>
     
@@ -98,8 +98,8 @@
   
   <entry>
     <title>iOS Auto Layout-不使用约束布局（译）</title>
-    <link href="http://yoursite.com/2018/04/07/iOS%20Auto%20Layout-%E4%B8%8D%E4%BD%BF%E7%94%A8%E7%BA%A6%E6%9D%9F%E5%B8%83%E5%B1%80%EF%BC%88%E8%AF%91)/"/>
-    <id>http://yoursite.com/2018/04/07/iOS Auto Layout-不使用约束布局（译)/</id>
+    <link href="http://yoursite.com/2018/04/07/iOS-AutoLayout-Without-Constraints/"/>
+    <id>http://yoursite.com/2018/04/07/iOS-AutoLayout-Without-Constraints/</id>
     <published>2018-04-07T12:01:23.000Z</published>
     <updated>2018-06-03T13:14:32.849Z</updated>
     
@@ -124,8 +124,8 @@
   
   <entry>
     <title>iOS Auto Layout-理解自动布局（译）</title>
-    <link href="http://yoursite.com/2018/04/07/iOS%20Auto%20Layout-%E7%90%86%E8%A7%A3%E8%87%AA%E5%8A%A8%E5%B8%83%E5%B1%80%EF%BC%88%E8%AF%91)/"/>
-    <id>http://yoursite.com/2018/04/07/iOS Auto Layout-理解自动布局（译)/</id>
+    <link href="http://yoursite.com/2018/04/07/iOS-AutoLayout-Understanding/"/>
+    <id>http://yoursite.com/2018/04/07/iOS-AutoLayout-Understanding/</id>
     <published>2018-04-07T07:03:40.000Z</published>
     <updated>2018-06-03T13:14:49.037Z</updated>
     
@@ -150,8 +150,8 @@
   
   <entry>
     <title>我所理解的 iOS 并发编程</title>
-    <link href="http://yoursite.com/2018/04/06/%E6%88%91%E6%89%80%E7%90%86%E8%A7%A3%E7%9A%84%20iOS%20%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/"/>
-    <id>http://yoursite.com/2018/04/06/我所理解的 iOS 并发编程/</id>
+    <link href="http://yoursite.com/2018/04/06/iOS-Concurrency-Programming/"/>
+    <id>http://yoursite.com/2018/04/06/iOS-Concurrency-Programming/</id>
     <published>2018-04-06T15:04:23.000Z</published>
     <updated>2018-06-03T13:13:21.726Z</updated>
     
@@ -176,8 +176,8 @@
   
   <entry>
     <title>iOS 中的事件响应与处理</title>
-    <link href="http://yoursite.com/2018/03/25/iOS%20%E4%B8%AD%E7%9A%84%E4%BA%8B%E4%BB%B6%E5%93%8D%E5%BA%94%E4%B8%8E%E5%A4%84%E7%90%86/"/>
-    <id>http://yoursite.com/2018/03/25/iOS 中的事件响应与处理/</id>
+    <link href="http://yoursite.com/2018/03/25/iOS-Event-Response/"/>
+    <id>http://yoursite.com/2018/03/25/iOS-Event-Response/</id>
     <published>2018-03-25T13:00:45.000Z</published>
     <updated>2018-06-03T13:14:18.611Z</updated>
     
@@ -203,8 +203,8 @@
   
   <entry>
     <title>按下 ⌘ + R 后发生的事情</title>
-    <link href="http://yoursite.com/2018/03/10/%E5%BD%93%E4%BD%A0%E6%8C%89%E4%B8%8B%20%E2%8C%98%20+%20R%20%E5%90%8E%E5%8F%91%E7%94%9F%E7%9A%84%E4%BA%8B%E6%83%85/"/>
-    <id>http://yoursite.com/2018/03/10/当你按下 ⌘ + R 后发生的事情/</id>
+    <link href="http://yoursite.com/2018/03/10/Press-Command-R/"/>
+    <id>http://yoursite.com/2018/03/10/Press-Command-R/</id>
     <published>2018-03-10T14:03:50.000Z</published>
     <updated>2018-06-03T13:13:03.935Z</updated>
     
@@ -230,8 +230,8 @@
   
   <entry>
     <title>我所理解的 Block</title>
-    <link href="http://yoursite.com/2018/02/28/%E6%88%91%E6%89%80%E7%90%86%E8%A7%A3%E7%9A%84Block/"/>
-    <id>http://yoursite.com/2018/02/28/我所理解的Block/</id>
+    <link href="http://yoursite.com/2018/02/28/My-Understand-Block/"/>
+    <id>http://yoursite.com/2018/02/28/My-Understand-Block/</id>
     <published>2018-02-28T12:10:27.000Z</published>
     <updated>2018-06-03T13:13:29.074Z</updated>
     
@@ -257,8 +257,8 @@
   
   <entry>
     <title>我所理解的 CocoaPods</title>
-    <link href="http://yoursite.com/2018/02/16/%E6%88%91%E6%89%80%E7%90%86%E8%A7%A3%E7%9A%84CocoaPods/"/>
-    <id>http://yoursite.com/2018/02/16/我所理解的CocoaPods/</id>
+    <link href="http://yoursite.com/2018/02/16/My-Understand-CocoaPods/"/>
+    <id>http://yoursite.com/2018/02/16/My-Understand-CocoaPods/</id>
     <published>2018-02-16T09:09:23.000Z</published>
     <updated>2018-06-03T13:13:36.987Z</updated>
     
@@ -283,8 +283,8 @@
   
   <entry>
     <title>2017 个人总结</title>
-    <link href="http://yoursite.com/2018/02/13/2017%20%E4%B8%AA%E4%BA%BA%E6%80%BB%E7%BB%93/"/>
-    <id>http://yoursite.com/2018/02/13/2017 个人总结/</id>
+    <link href="http://yoursite.com/2018/02/13/annual-report-2017/"/>
+    <id>http://yoursite.com/2018/02/13/annual-report-2017/</id>
     <published>2018-02-13T02:05:06.000Z</published>
     <updated>2018-06-03T13:12:43.285Z</updated>
     
@@ -310,8 +310,8 @@
   
   <entry>
     <title>查询规划器（译）</title>
-    <link href="http://yoursite.com/2018/01/10/%E6%9F%A5%E8%AF%A2%E8%A7%84%E5%88%92%E5%99%A8/"/>
-    <id>http://yoursite.com/2018/01/10/查询规划器/</id>
+    <link href="http://yoursite.com/2018/01/10/SQLite-Queryplanner/"/>
+    <id>http://yoursite.com/2018/01/10/SQLite-Queryplanner/</id>
     <published>2018-01-10T10:04:49.000Z</published>
     <updated>2018-06-03T13:12:53.834Z</updated>
     
@@ -337,8 +337,8 @@
   
   <entry>
     <title>iOS 中的单元测试</title>
-    <link href="http://yoursite.com/2017/10/04/iOS%20%E4%B8%AD%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/"/>
-    <id>http://yoursite.com/2017/10/04/iOS 中的单元测试/</id>
+    <link href="http://yoursite.com/2017/10/04/iOS-Unit-Test/"/>
+    <id>http://yoursite.com/2017/10/04/iOS-Unit-Test/</id>
     <published>2017-10-04T13:05:30.000Z</published>
     <updated>2018-06-03T13:14:07.359Z</updated>
     

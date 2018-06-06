@@ -1,0 +1,198 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> iOS Auto Layout-约束的本质（译） · Hexo</title><meta name="description" content="iOS Auto Layout-约束的本质（译） - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/avatar.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://yoursite.com/atom.xml" title="Hexo"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/avatar.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/3290954642" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/boolchow" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">iOS Auto Layout-约束的本质（译）</h1><div class="post-info">Apr 8, 2018</div><div class="post-content"><a id="more"></a>
+<p>对视图层级布局，实际上是定义了一系列的线性方程式。每一条约束代表一个方程式。你的目的就是通过声明一些列的方程式，并使其只有一组最优解。</p>
+<p>下面展示了一组简单的方程式.</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/view_formula_2x.png" width="530" height="230"><br></div>
+
+<p>这条约束声明了红色视图的头部必须与蓝色视图的尾部保持 8-point 距离。这个方程式可以分为以下几部分：</p>
+<ul>
+<li><strong>Item 1.</strong> 方程式的第一个 item，这里代表的是红色视图。这一项必须为一个视图或者 layout guide.</li>
+<li><strong>Attribute 1.</strong> 被约束的布局属性，在这里即红色视图的头部(左侧)边缘.</li>
+<li><strong>RelationShip.</strong> 左右两边的逻辑关系。逻辑关系有三种情况：等于，大于等于，小于等于。在这里，左右两边是相等的关系.</li>
+<li><strong>Multiplier.</strong> 需要与 attribute2 相乘的值，这里相乘的值为 1.0.</li>
+<li><strong>Item 2.</strong> 方程式中的第二个 item，在这里代表红色视图。与 item1 不同，这里可以为空。</li>
+<li><strong>Attribute 2.</strong> 第二个 item 中被约束的布局属性。在这里代表蓝色视图的尾部(右侧)边缘。如果 item2 为空的话，那么这就不应该是一个布局属性.</li>
+<li><strong>Constant.</strong> 一个浮点型常量，用来表示偏移量。在这里代表 attribute2 加上 8-point.</li>
+</ul>
+<blockquote>
+<p><strong>备注</strong><br>这里的 layout guide 是指 UIViewController 的 topLayoutGuide 或者 bottomLayoutGuide，直译过来可能会改变意思，这里直接使用 layout guide.</p>
+</blockquote>
+<p>大部分约束用来定义界面上两个元素的相互关系。这些元素可以是视图，也可以是 layout guides.约束也可以用来定义同一个元素两个不同属性之间的相互关系，例如，通过约束可以设置一个视图的长宽比。你这可以直接给一个视图的长或宽进行常量赋值，如果你这样做，那么上述方程式中的 item2 就会为空，对应的 attribute2 也不再是一个布局属性，multiplier 也会设置为 0.0。</p>
+<h3 id="自动布局属性"><a href="#自动布局属性" class="headerlink" title="自动布局属性"></a>自动布局属性</h3><p>在 Auto Layout 中，一些特定的属性才可以用来进行设置各种约束。一般情况下，有以下几个属性：四条边缘（前，后，上，下）、高和宽、垂直居中线、水平居中线。对于文本类视图，可能还会有几条基准线属性。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/attributes_2x.png" width="470" height="420"><br></div>
+
+<p>关于全部的布局属性，请查看 <a href="https://developer.apple.com/documentation/uikit/nslayoutattribute" target="_blank" rel="noopener">NSLayoutAttribute</a>。</p>
+<blockquote>
+<p><strong>备注</strong><br>尽管 OS X 和 iOS 使用的都是 NSLayoutAttribute，但是两个系统定义的这个枚举的值是不同的。当你查看时，注意选择正确的系统。</p>
+</blockquote>
+<h3 id="方程式样例"><a href="#方程式样例" class="headerlink" title="方程式样例"></a>方程式样例</h3><p>在方程式中有很多参数和布局属性，你可以通过改变这些参数创建各种各样的约束。你可以通过约束来定义两个 view 之间的间隔，多个 view 的对齐方式，两个 view 之间的大小关系，甚至一个 view 的长宽比。然而，并不是所有的属性与约束直接都可以互相兼容。</p>
+<p>这里主要将属性分为两类。大小属性（例如，高和宽）和位置属性（例如，头，左，上）。大小属性用来指定视图的大小。位置属性用来指定 view 之间相对位置。</p>
+<p>考虑到两者的差异性，在进行约束布局时你需要遵循以下原则：</p>
+<ul>
+<li>你不能将一个大小属性和一个位置属性进行约束关联.</li>
+<li>你不能为一个位置属性进行常量赋值.</li>
+<li>两个位置属性之间进行约束关联时，不应该使用不同的倍率(原则上 multiplier 的值都为 1.0).</li>
+<li>对于位置属性，你不能将垂直线和水平线两个属性进行约束关联.</li>
+<li>对于位置属性，你不能将头部边缘或者尾部边缘，与对应的左边缘属性和右边缘进行约束关联.di</li>
+</ul>
+<p>例如，你直接设置一个 view 的顶部距离为 20.0-point 没有任何意义。你必须设置两个 view 之间的相对位置关系，例如，一个 view 距离 superview 顶部下方 20.0-point。当然，直接通过约束设置一个 view 的高度为 20.0 是最佳使用方法。更多信息，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/AnatomyofaConstraint.html#//apple_ref/doc/uid/TP40010853-CH9-SW22" target="_blank" rel="noopener">Interpreting Values</a>。</p>
+<p>代码 3-1 展示了一些常见的方程式。</p>
+<blockquote>
+<p><strong>备注</strong><br>本章节中所展示的方程式全都是伪代码，如果想要看真实的方程式，请查看<a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/ProgrammaticallyCreatingConstraints.html#//apple_ref/doc/uid/TP40010853-CH16-SW1" target="_blank" rel="noopener">通过编码创建约束</a>或者<a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/LayoutUsingStackViews.html#//apple_ref/doc/uid/TP40010853-CH3-SW1" target="_blank" rel="noopener">Auto Layout 宝典</a>。</p>
+</blockquote>
+<p><strong>代码 3-1</strong> 常见约束方程式示例<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// 通过约束设置 view 的高度</span><br><span class="line">View.height = 0.0 * NotAnAttribute + 40.0</span><br><span class="line"></span><br><span class="line">// 通过约束设置两个 button 之间距离为固定值</span><br><span class="line">Button_2.leading = 1.0 * Button_1.trailing + 8.0</span><br><span class="line"></span><br><span class="line">// 使两个 button 头部对齐</span><br><span class="line">Button_1.leading = 1.0 * Button_2.leading + 0.0</span><br><span class="line"></span><br><span class="line">// 设置两个 button 等宽</span><br><span class="line">Button_1.width = 1.0 * Button_2.width + 0.0</span><br><span class="line"></span><br><span class="line">// 设置 view 居中与父视图</span><br><span class="line">View.centerX = 1.0 * Superview.centerX + 0.0</span><br><span class="line">View.centerY = 1.0 * Superview.centerY + 0.0</span><br><span class="line"></span><br><span class="line">// 设置 view 宽高比为 1:2</span><br><span class="line">View.height = 2.0 * View.width + 0.0</span><br></pre></td></tr></table></figure></p>
+<h3 id="等于，代表的不是赋值"><a href="#等于，代表的不是赋值" class="headerlink" title="等于，代表的不是赋值"></a>等于，代表的不是赋值</h3><p>这里有必要说明一下，上述方程式代表的是左右两边等价，不是赋值。</p>
+<p>当 Auto Layout 处理这些方程式的时候，并不是直接将右边的值赋给左边。而是计算能够是两边关系保持等价的值。这意味着我们可以随意调换等式两边元素的方向。例如，代码 3-2 与之前 3-1 中的一些方程式等价但却反转了方向。</p>
+<p><strong>代码 3-2</strong> 变换的方程式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">// 通过约束设置两个 button 之间距离为固定值</span><br><span class="line">Button_1.trailing = 1.0 * Button_2.leading - 8.0</span><br><span class="line"></span><br><span class="line">// 使两个 button 头部对齐</span><br><span class="line">Button_2.leading = 1.0 * Button_1.leading + 0.0</span><br><span class="line"></span><br><span class="line">// 设置两个 button 等宽</span><br><span class="line">Button_2.width = 1.0 * Button.width + 0.0</span><br><span class="line"></span><br><span class="line">// 设置 view 居中与父视图</span><br><span class="line">Superview.centerX = 1.0 * View.centerX + 0.0</span><br><span class="line">Superview.centerY = 1.0 * View.centerY + 0.0</span><br><span class="line"></span><br><span class="line">// 设置 view 宽高比为 1:2</span><br><span class="line">View.width = 0.5 * View.height + 0.0</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>备注</strong><br>当你进行左右元素转换时，确定你转换了常量和倍率。例如，如果一个常量之前是 8.0，转换完了就是 -8.0；如果之前倍率是 2.0，转换完了就会是 0.5；如果常量为 0.0 或者倍率为 1.0 则保持不变。</p>
+</blockquote>
+<p>你大概可以发现，对于解决同一个问题 Auto Layout 提供了多种解决方案。理想情况下，你应该选择一个最优的解决方案。但是，不同的开发者对理想方案的定义不同。所以，不要去争论谁的方案最优，只要统一方案就好。如果你选择一个合适的方案，并且始终遵循这种方案，那么你遇到的问题将会减少很多。例如，这篇指南中遵循了一下原则：<br>1.尽量用整数，少用小数.<br>2.尽量使用正数，少用负数.<br>3.如果可能的话，你需要遵循这个顺序去设置约束：从头到尾，从上到下。</p>
+<h3 id="创建一个清晰的，满足要求的布局"><a href="#创建一个清晰的，满足要求的布局" class="headerlink" title="创建一个清晰的，满足要求的布局"></a>创建一个清晰的，满足要求的布局</h3><p>当你使用 Auto Layout 时，你的目的是通过提供一系列的方程式，并使其只有一个最优解。设置模糊不定的约束，会使其有多组解。设置不满足条件的约束，得不到有效的解。</p>
+<p>通常情况下，需要通过约束将每个 view 的大小和位置都设置好。假设 superview 的大小已经被设置(例如，iOS 系统上一个页面的根视图)，那么一个清晰、满足需求的布局条件是这样的：给每个 view(不算 superview) 在每个维度(水平和竖直维度)各设置两个约束，用来布局 view 的大小和位置。然而，满足需求的方案有很多。例如，下面展示了三种布局方式(只显示了水平方向的约束)，都是比较简洁并满足需求的布局方案:</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/constraint_examples_2x.png" width="660" height="280"><br></div>
+
+<ul>
+<li>第一个布局方案，通过设置约束，使 view 的左边缘与 superview 的左边缘关联。并且给 view 的宽度设置一个常量值。这样 view 的右边缘位置可以根据 superview 的大小和其他约束条件计算出来.</li>
+<li>第二个布局方案，通过设置约束，使 view 的左边缘与 superview 的左边缘关联，使 view 的右边缘与 superview 的右边缘关联。这样 view 的宽度可以根据 superview 的大小和其他约束条件计算出来.</li>
+<li>第三个布局方案，通过设置约束，使 view 的左边缘与 superview 的左边缘关联，并且使 view 垂直居中于 superview.这样的话，view 的宽度和 右边缘位置可以根据 superview 大小和其他约束计算出来.</li>
+</ul>
+<p>你可能注意到，上述三种布局方案中，都是一个 view 对应水平方向两条约束。每个方案中，通过约束完全可以确定 view 的宽度和在水平方向的位置。这就说明这三种布局方案均能够确定 view 水平方向的布局。然而，当 superview 的宽度发生改变时，这三种布局方案产生的效果却不尽相同。</p>
+<p>缘距离保持定值。虽然两种方案表现效果相同，但是两个方案并不完全等价。通常情况下，第二种方案更容易让人理解，但是第三种方案更具使用价值，特别是当你想使多个 view 保持居中对齐时。在实际开发过程中，根据具体需求，选择一种最合适的方案。</p>
+<p>现在考虑一些稍微复杂一点的情况。假设现在有两个 view，你想使这两个 view 在同一屏幕上并排在一起，四周之间距保持一定距离，宽度始终保持相等。并且在屏幕旋转时，也保持这样的效果。</p>
+<p>下面的两幅图中，展示了横屏和竖屏两种情况。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Blocks_Portrait_2x.png" width="240" height="430"><br></div>
+
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/Blocks_Landscape_2x.png" width="430" height="240"><br></div>
+
+<p>所以针对这种效果应该怎样设置约束呢？下图展示了一种简单的布局方案：</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/two_view_example_1_2x.png" width="330" height="370"><br></div>
+
+<p>上述布局方案，使用了如下约束条件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 竖直方向约束条件</span><br><span class="line">Red.top = 1.0 * Superview.top + 20.0</span><br><span class="line">Superview.bottom = 1.0 * Red.bottom + 20.0</span><br><span class="line">Blue.top = 1.0 * Superview.top + 20.0</span><br><span class="line">Superview.bottom = 1.0 * Blue.bottom + 20.0</span><br><span class="line"></span><br><span class="line">// 水平方向约束条件</span><br><span class="line">Red.leading = 1.0 * Superview.leading + 20.0</span><br><span class="line">Blue.leading = 1.0 * Red.trailing + 8.0</span><br><span class="line">Superview.trailing = 1.0 * Blue.trailing + 20.0</span><br><span class="line">Red.width = 1.0 * Blue.width + 0.0</span><br></pre></td></tr></table></figure>
+<p>遵循之前说的设计原则，这个布局方案中有两个 view，四条水平方向约束，四条竖直方向约束。这并不是最完美的设计方案，他只是一个参考方案。重要的是，这种方案可以快速地确定两个 view 的大小和位置，实现一个符合需求的布局。如果你现在移除所有的约束，不参考这个方案重新进行布局，你可能会遇到各种约束冲突。</p>
+<p>但是，上述只是一个参考方案，并不是唯一的布局方案。例如这里有一种等价效果的布局方案:</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/two_view_example_2_2x.png" width="330" height="370"><br></div>
+
+<p>这里不再是将蓝 view 的底部和顶部边缘直接与 superview 的底部和顶部边缘进行约束，而是将蓝色 view 的顶部与红色 view 的顶部对齐。类似的，将蓝色视图的底部和红色视图的底部对齐。具体约束如下所示。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">// 竖直方向约束</span><br><span class="line">Red.top = 1.0 * Superview.top + 20.0</span><br><span class="line">Superview.bottom = 1.0 * Red.bottom + 20.0</span><br><span class="line">Red.top = 1.0 * Blue.top + 0.0</span><br><span class="line">Red.bottom = 1.0 * Blue.bottom + 0.0</span><br><span class="line"></span><br><span class="line">// 水平方向约束</span><br><span class="line">Red.leading = 1.0 * Superview.leading + 20.0</span><br><span class="line">Blue.leading = 1.0 * Red.trailing + 8.0</span><br><span class="line">Superview.trailing = 1.0 * Blue.trailing + 20.0</span><br><span class="line">Red.width = 1.0 * Blue.width + 0.0</span><br></pre></td></tr></table></figure>
+<p>这种布局方案依然是有两个 view，通过水平方向四条约束，竖直方向有四条约束。定义了一个满足需求的布局。</p>
+<blockquote>
+<p><strong>但是哪一个方案更好呢</strong><br>这两种方案都能够满足需求。所以那种方案更好一些呢？</p>
+<p>实际上，针对这两种方案不能绝对的说哪一种更好，两种方案都有各自的优势。</p>
+<p>第一种布局方案更适合有其他 view 被移除的情况。如果一次 view 从视图层级中被移除，那么它的相关的约束也会被移除。所以，在第一种方案中，如果你移除红色视图后，蓝色视图还会保留三条约束。这样你只需要再添加一条约束就能够重新布局。在第二种方案中，如果移除了红色视图，那么蓝色视图只剩一条约束。</p>
+<p>另一方面，在第一种布局方案中，如果你想使两个 view 的上下对齐，你需要将每个视图的上下两条约束各自设置相同的常量值。如果你改变了一个的值，你同时必须要修改另一个。</p>
+</blockquote>
+<h3 id="不等式约束"><a href="#不等式约束" class="headerlink" title="不等式约束"></a>不等式约束</h3><p>到目前为止，所有示例中展示的都是等式约束，这只是约束的一部分。约束也可以通过不等式来表述。具体来说，约束关系可以是等于、大于等于、小于等于。</p>
+<p>例如，你可以通过约束设置一个 view 的 size 的最大值和最小值(代码 3-3)。</p>
+<p><strong>代码 3-3</strong> 给一个 view 的 size 设置最大值和最小值</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">// 设置宽度最小值</span><br><span class="line">View.width &gt;= 0.0 * NotAnAttribute + 40.0</span><br><span class="line"></span><br><span class="line">// 设置宽度最大值</span><br><span class="line">View.width &lt;= 0.0 * NotAnAttribute + 280.0</span><br></pre></td></tr></table></figure>
+<p>一但你使用的不等式约束，每个 view 上之前的约束将会失效。任何时候你都可以通过使用两条不等式约束去代替等式约束。在代码 3-4 中，上面一个等式关系和下面的两个不等式关系所布局的效果是等价的。</p>
+<p><strong>代码 3-4</strong> 使用两个不等式代替一个等式</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 一个等式</span><br><span class="line">Blue.leading = 1.0 * Red.trailing + 8.0</span><br><span class="line"></span><br><span class="line">// 可以被下面两个不等式代替</span><br><span class="line">Blue.leading &gt;= 1.0 * Red.trailing + 8.0</span><br><span class="line">Blue.leading &lt;= 1.0 * Red.trailing + 8.0</span><br></pre></td></tr></table></figure>
+<p>并不是所有的等式与不等式之间都可以这样转换，有时候两个不等关系并不等价于一个相等关系。例如，在<a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/AnatomyofaConstraint.html#//apple_ref/doc/uid/TP40010853-CH9-SW10" target="_blank" rel="noopener">代码 3-3</a> 中使用两个不等式约束定义了 view 的宽度范围，但是没有具体定义宽度。你如果你想具体定义 view 的位置和大小，仍然需要在这个范围内添加水平方向的约束。</p>
+<h3 id="约束的属性"><a href="#约束的属性" class="headerlink" title="约束的属性"></a>约束的属性</h3><p>一般情况下，每条约束都是必须的。Auto Layout 需要根据所有的约束条件计算出一个合理的结果。如果不能计算出来，那说明这里存在错误。Auto Layout 会将一些有问题的约束信息输出到控制台，然后你可以根据控制台信息将一些有冲突的约束干掉。然后 Auto Layout 会重新计算结果。关于更多消息，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/ConflictingLayouts.html#//apple_ref/doc/uid/TP40010853-CH19-SW1" target="_blank" rel="noopener">Unsatisfiable Layouts</a> 章节。</p>
+<p>你也可以创建可选约束。所有的约束都有一个权重值，这个值的范围是 1~1000。如果一条约束的权重为 1000，那么这个约束条件是必须的。</p>
+<p>当计算约束结果时，Auto Layout 会优先满足权重比较高的约束条件。如果一条可选约束条件不能被满足，这条约束将会被跳过，然后继续处理下一条约束。</p>
+<p>尽管一些可选约束条件不能被满足，但是它依然会影响布局。在布局时，如果跳过一些非法约束后，仍然有一些布局不能确定，系统会从跳过的那些约束中，选择一条最接近需求的约束。这些非法约束条件就会被强行加到当前的视图，从而影响布局效果。</p>
+<p>通常可选约束和不等式约束会配合使用。例如，在 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/AnatomyofaConstraint.html#//apple_ref/doc/uid/TP40010853-CH9-SW9" target="_blank" rel="noopener">代码 3-4</a> 中你可以将两个不等式约束的权重设置为不同值。关系为“大于等于”的约束条件设置为最高优先级（权重 1000），关系为”小于等于”的约束条件权重设置为低优先级（权重 250）.这意味着蓝色 view 的距离红色 view 不能小于 8.0-point。然而，其他一些约束可能会使这个距离变得更远。所以，通过添加这条可选约束，可以确保蓝色 view 与红色 view 尽可能保持 8.0-point 左右的距离，而不会因为添加其他约束导致距离变得很远。</p>
+<blockquote>
+<p><strong>备注</strong><br>不要随意将约束的权重设置为 1000。系统默认定义了一个级别的优先级：低优先级（250），中等优先级（500），高优先级（750）和最高优先级（1000）。在为约束设置权重是，你应该围绕着这些值设定，大于或小于 1 或 2。如果你超出这些值很多，你可能需要重新审查一下你的布局逻辑。</p>
+<p>关于在 iOS 系统中预定义的一些约束优先级，请查看 <a href="https://developer.apple.com/documentation/uikit/uilayoutpriority" target="_blank" rel="noopener">UILayoutPriority</a>。对于 OS X 系统，请查看 Layout Priorities constants.</p>
+</blockquote>
+<h3 id="固有内容大小"><a href="#固有内容大小" class="headerlink" title="固有内容大小"></a>固有内容大小</h3><p>目前为止，所有的样例中都是通过约束来定义 view 的大小和位置。然而，有一些视图会根据内容产生一个固有大小。这就是之前所有的 <strong><em>固有内容大小</em></strong>。例如，一个 button 的固有内容大小就是他的 title 内容大小加上一些边缘的大小。</p>
+<p>并不是所有的 view 都有其固有内容大小。如果一个 view 有固有内容大小，那么通过固有内容大小就可以定义这个 view 的宽和高。这里有一些示例在 表 3-1 中。</p>
+<p><strong>表 3-1</strong> 控件的固有内容大小情况</p>
+<table>
+<thead>
+<tr>
+<th>View</th>
+<th>固有内容大小情况</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UIView 和 NSView</td>
+<td>没有固有内容大小</td>
+</tr>
+<tr>
+<td>Sliders</td>
+<td>只有固有宽度（iOS 系统）. 根据不同类型，可能有固有宽度，可能有固有高度，或者两者都有（OS X）.</td>
+</tr>
+<tr>
+<td>Labels,buttons,switches 和 text fields</td>
+<td>同时包含固有宽和高</td>
+</tr>
+<tr>
+<td>Text views 和 image views</td>
+<td>固有内容大小为变量</td>
+</tr>
+</tbody>
+</table>
+<p>固有大小根据 view 当前展示的内容而定。对于一个 label 或者一个 button，它的固有大小根据控件所展示的文本字数和字体大小而定。对于其他视图，影响控件固有大小的因素会更多。例如，一个空的 image view 没有固有大小。一旦你将一个图片添加到上面，它的固有大小就变成这个图片的大小。</p>
+<p>一个 text view 的固有大小根据这些因素而定：内容多少，是否可以滚动，是否有额外约束添加到视图上。例如，如果 view 可以滚动，那么这个 text view 就没有固有大小。如果不可以滚动，默认情况下内容不换行，然后根据内容的大小计算固有大小。例如，如果一个 text view 没有内容，那么会按照一行为本的形式来计算它的宽和高。如果通过约束条件指定了它的宽度，那么它的固有高度就是展示这么宽的文本所需要的高度。</p>
+<p>Auto Layout 通过在每个维度设置一组约束条件，以此来表现出固有大小。content hugging 这个约束条件，会尽可能压缩视图，使其紧贴内容；compression resistance 这个约束条件，会尽可能向外扩大视图，是内容尽可能不会被裁剪。</p>
+<div align="center"><br><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/intrinsic_content_size_2x.png" width="360" height="120"><br></div>
+
+<p>下面代码中，约束条件使用的是代码 3-5 所提及的不等式约束。在这里，<strong>IntrinsicHeight</strong> 和 <strong>IntrinsicWidth</strong> 常量代表 view 的固有内容大小得出的高和宽。</p>
+<p><strong>代码 3-5</strong> Compression-Resistance 和 Content-Hugging 方程式.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// Compression Resistance</span><br><span class="line">View.height &gt;= 0.0 * NotAnAttribute + IntrinsicHeight</span><br><span class="line">View.width &gt;= 0.0 * NotAnAttribute + IntrinsicWidth</span><br><span class="line"></span><br><span class="line">// Content Hugging</span><br><span class="line">View.height &lt;= 0.0 * NotAnAttribute + IntrinsicHeight</span><br><span class="line">View.width &lt;= 0.0 * NotAnAttribute + IntrinsicWidth</span><br></pre></td></tr></table></figure>
+<p>每条约束都有他自己的权重。默认情况下，Content Hugging 的权重为 250，Compression Resistance 的权重为 750。因此，相对于压缩 view，扩大视图的优先级更高。在多数情况下，这样设计是很有必要的。例如，这样设计后，你可以放心的通过约束去改变 buttton 的大小，使其比固有大小还要大。如果你想压缩这个 button，那么他的内容将会被裁剪，这是不被允许的。需要说的是，通过 Interface Builder 可以改变这些权重。关于更多信息，请查看 <a href="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/WorkingwithConstraintsinInterfaceBuidler.html#//apple_ref/doc/uid/TP40010853-CH10-SW2" target="_blank" rel="noopener">Setting Content-Hugging and Compression-Resistance Priorities</a> 相关内容。</p>
+<p>只有可以，尽可能的在布局中利用 view 固有大小这一特性。这样可以让你的 view 随着内容的改变进行动态适配。而且在布局时，可减少约束的数量，避免太多约束冲突。但是你需要记得处理 view 的 content-hugging 和 compression-resistance （CHCR）这两条约束的权重。关于如何处理固有大小，这里提供了一些参考:</p>
+<ul>
+<li>当你想要通过拉伸视图来填充父视图时，如果每个 view 的 content-hugging 约束的权重相等，那么布局起来会比较混乱。Auto Layout 不知道那个视图需要被拉伸.<br><br>一个比较常见的例子就是：这里有一个 label 和一个 text field，通常情况下，你想拉伸 text field 使其填满空白区域，而使 label 保持固有大小。那么此时你就需要将 text field 水平方向的 content-hugging 约束权重设置的相对低一些.<br><br>实际上，在你使用 Interface Bulider 进行布局时，会自动帮你处理这个问题，直接将 Label 的的 content—hugging 的权重设置为 251。如果你想通编码来进行布局，那么需要你手动去改变 content—hugging 的权重.</li>
+<li>如果你强行拉伸了一些有隐藏背景的视图（例如 button 或者 label），使其超过他们个固有大小，会发生一些意想不到的现象。现象可能并不是特别明显，毕竟只是文本出现在错误的位置而已。为了避免这种拉伸，你可以增加 view 的 content-hugging 的权重.</li>
+<li>基线对齐约束只作用于 view 的固有高度上。如果一个 view 在竖直方向拉伸或压缩，那么基线对齐约束将不能再使 view 正确的对齐。</li>
+<li>一些视图，例如 switch 控件，通常以固有大小展示。你可以通过增加他们的 CHCR 的权重，来避免使它们受到压缩和拉伸。</li>
+<li>尽量避免把 view 的 CHCR 的权重设为特定值。通常情况下，展示一个错误的大小比出现约束冲突更好一些。如果一个 view 有必要总以固有大小展示，那么就把他的 CHCR 设置一个非常高（999）的权重。这个方法可以避免使你的 view 被拉伸或者压缩，防止 view 展示的太大或者太小。</li>
+</ul>
+<h3 id="固有内容大小-VS-合适大小"><a href="#固有内容大小-VS-合适大小" class="headerlink" title="固有内容大小 VS 合适大小"></a>固有内容大小 VS 合适大小</h3><p>对于 Auto Layout 来说，固有大小作为一个输入值。当 view 有一个固有大小，系统会将将这个固有大小转化为对应的约束条件，和其他约束条件放在一起。然后针对这些条件计算布局结果。</p>
+<p>另一方面，合适大小相对于 Auto Layout 来说是一个输出值。这个大小是通过 view 的所有约束条件计算出来的。当使用 Auto Layout 布局 view 的子视图时，系统会根据子视图内容大小，为 view 计算出一个合适的展示大小。</p>
+<p>Stack view 是一个很好的例子。不添加任何其他约束的情况下，系统会根据 stack view 的内容和属性设置，去计算这个 stack view 的大小。很多时候，stack view 都被视为是有固有大小的 view，在进行布局时，你仅需要在水平方向和竖直方向各添加一条约束来定义它的位置即可，不需要再通过约束去定义它的大小。但是，它的大小是通过 Auto Layout 计算出来的，而不是作位输入值供 Auto Layout 使用。设置 stack view 的 CHCR 的权重不会起任何作用，因为它本质上不是一个具有固有内容大小的 view，只是类似而已。</p>
+<h3 id="属性解释"><a href="#属性解释" class="headerlink" title="属性解释"></a>属性解释</h3><p>Auto Layout 的一些值都以 point 为单位。这些属性的含义，需要根据具体布局方向来确定。</p>
+<table>
+<thead>
+<tr>
+<th>Auto Layout 属性</th>
+<th>含义</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_Height_2x.png" width="30" style="vertical-align:middle;"> Height</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_Width_2x.png" width="30" style="vertical-align:middle;"> Width</div></td>
+<td>view 的大小</td>
+<td>这些属性可以直接赋予常量值，或者与其他的 Height 和 Width 属性相关联.这些值不能为负数.</td>
+</tr>
+<tr>
+<td><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_TopToSuper_2x.png" width="30" style="vertical-align:middle;"> Top</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_BottomToSuper_2x.png" width="30" style="vertical-align:middle;"> Bottom</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_AlignMiddle_2x.png" width="30" style="vertical-align:middle;"> BaseLine</div></td>
+<td>当你上下移动 view 时,这些值会发生变化.</td>
+<td>这些属性仅与 Center Y,Top,Bottom,和 BaseLine 这些属性关联.</td>
+</tr>
+<tr>
+<td><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_LeftToSuper_2x.png" width="30" style="vertical-align:middle;"> Leading</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_RightToSuper_2x.png" width="30" style="vertical-align:middle;"> Trailing</div></td>
+<td>这些值会随着你移动 view 远离边缘时而变大.对于从左到右的布局,当你向右移动 view 时值会变大.对于从右到左的布局,当你像左移动 view 时值会变大.</td>
+<td>这些属性仅与 Leading,Trailing,或者 Center X 属性关联.</td>
+</tr>
+<tr>
+<td><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_LeftToSuper_2x.png" width="30" style="vertical-align:middle;"> Left</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_RightToSuper_2x.png" width="30" style="vertical-align:middle;"> Right</div></td>
+<td>当你左右移动 view 时,这些属性的值会变化.</td>
+<td>这些属性仅可以与 Left,Right,和 Center x 关联使用.<br>在开发过程中,尽量使用 Leading 和 Trailing 代替 Left 和 Right.这样布局方向会随着阅读方向改变而适配.默认的阅读方向是根据用户设置的语言而定的.然而,如果有必要,你可以重写这部分.在 iOS 中,你可以通过设置 view 的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622461-semanticcontentattribute" target="_blank" rel="noopener">semanticContentAttribute</a> 这一属性来指定当语言方向改变时,是否改变布局方向.</td>
+</tr>
+<tr>
+<td><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_AlignCenter_2x.png" width="30" style="vertical-align:middle;"> Center X</div><br><div><img src="https://developer.apple.com/library/content/documentation/UserExperience/Conceptual/AutolayoutPG/Art/ALGuide_AlignMiddle_2x.png" width="30" style="vertical-align:middle;"> Center Y</div></td>
+<td>具体含义需要根据约束方程式中其他属性而确定.</td>
+<td>Center x 可以与 Center X,Leading,Trailing,Right,和 Left 属性关联.Center Y 可以与 Center Y,Top,Bottom,和 BaseLine 属性关联.</td>
+</tr>
+</tbody>
+</table>
+</div></article></div></main><footer><div class="paginator"><a href="/2018/04/08/iOS-AutoLayout-Working-IB/" class="prev">上一篇</a><a href="/2018/04/07/iOS-AutoLayout-Without-Constraints/" class="next">下一篇</a></div><div id="container"></div><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"><script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script><script>var gitment = new Gitment({
+    id: 'Sun Apr 08 2018 14:23:40 GMT+0800',
+    owner: 'boolchow',
+    repo: 'boolchow.github.io',
+    oauth: {
+        client_id: '06247ad6645fcdc4c37c',
+        client_secret: 'b3107efca11a366f4da8281d78bf59880f19a253',
+    },
+})
+gitment.render('container')</script><div class="copyright"><p>© 2015 - 2018 <a href="http://yoursite.com">John Doe</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
