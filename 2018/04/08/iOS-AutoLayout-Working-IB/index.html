@@ -140,7 +140,7 @@
 <li>当你通过编码实例化一个 view 时，必须将它的 <a href="https://developer.apple.com/documentation/uikit/uiview/1622572-translatesautoresizingmaskintoco" target="_blank" rel="noopener">translatesAutoresizingMaskIntoConstraints</a> 属性设置为 <code>NO</code>.否则在默认情况下，系统会基于 view 的 frame 和 autoresizing mask 自动创建一系列的约束.当你创建自己的约束时，他们必然会与自动创建的一些约束发生冲突.这样的布局时不符合要求的.</li>
 <li>需要意识到 OS X 系统和 iOS 系统计算布局的方式是不同的.<br><br>在 OS X 系统中，Auto Layout 即可以改变 window 内容的布局，也可以改变 window 的布局.<br><br>在 iOS 系统中,系统会通过当前场景的大小和布局.Auto Layout 只能改变场景中内容的大小和位置.<br><br>这些不同看起来无关紧要，但是他对你布局的设计有着很大影响，特别是使用一些属性的时候.</li>
 </ul>
-</div></article></div></main><footer><div class="paginator"><a href="/2018/04/13/iOS-AutoLayout-StackView/" class="prev">上一篇</a><a href="/2018/04/08/iOS-AutoLayout-Anatomy/" class="next">下一篇</a></div><div id="container"></div><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"><script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script><script>var gitment = new Gitment({
+</div></article></div></main><footer><div class="paginator"><a href="/2018/04/13/iOS-AutoLayout-StackView/" class="prev">PREV</a><a href="/2018/04/08/iOS-AutoLayout-Anatomy/" class="next">NEXT</a></div><div id="container"></div><link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css"><script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script><script>var gitment = new Gitment({
     id: 'Sun Apr 08 2018 22:02:47 GMT+0800',
     owner: 'boolchow',
     repo: 'boolchow.github.io',
@@ -149,4 +149,5 @@
         client_secret: 'b3107efca11a366f4da8281d78bf59880f19a253',
     },
 })
-gitment.render('container')</script><div class="copyright">版权声明：本文为博主原创文章,翻译文章,未经允许不可用于商业用途.<p>© 2015 - 2018 boolchow | powered by <a href="https://hexo.io/" target="_blank">Hexo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
+gitment.render('container')</script><div class="copyright">版权声明：本文为博主原创文章,翻译文章,未经允许不可用于商业用途.
+公众号：@bool周,不定期更新文章.<p>© 2015 - 2018 boolchow | powered by <a href="https://hexo.io/" target="_blank">Hexo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>
