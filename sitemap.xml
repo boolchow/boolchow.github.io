@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://yoursite.com/2016/03/29/Memory-Manage-2-MRC/</loc>
+    
+    <lastmod>2018-06-09T15:30:21.768Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://yoursite.com/2016/09/08/Reduce-crash/</loc>
     
     <lastmod>2018-06-06T12:28:02.504Z</lastmod>
@@ -47,13 +54,6 @@
     <loc>http://yoursite.com/2016/03/30/Memory-Manage-3-ARC/</loc>
     
     <lastmod>2018-06-06T12:23:19.772Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://yoursite.com/2016/03/29/Memory-Manage-2-MRC/</loc>
-    
-    <lastmod>2018-06-06T12:23:13.302Z</lastmod>
     
   </url>
   
